@@ -1,0 +1,57 @@
+<div class="row">
+    <div class="col-xs-12 col-sm-10">
+        <div class="box box-primary">
+            <div class="box-header with-border">
+                <h3 class="box-title">Informaci&oacute;n Basica</h3>
+            </div>
+            <form>
+                <div #container class="box-body">
+                    <div class="form-group">
+                        <label for="" class="control-label">Nombre</label>
+                        <input type="text" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="" class="control-label">Unidad</label>
+                        <select name="" id="" class="form-control">
+                            <option value="">Valor (sin unidad)</option>
+                            <option value="">Minutos</option>
+                        </select>
+                    </div>
+                    <h3>Procesamiento de datos</h3>
+                    <p>Almacenamos un valor consolidado mensual por cada indicador. Con que operaci&oacute;n desea que se realice dicha consolidaci&oacute;n? </p>
+                    <label class="radio-inline">
+                        <input type="radio" name="suma" id="suma" value="plus"> Suma (se sumaran todos los valores del mes)
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="promedio" id="promedio" value="average"> Promedio (se realizara un promedio entre todos los valores del mes)
+                    </label>
+                    <h3>An&aacute;lisis de datos</h3>
+                    <p>Para determinar la evoluci&oacute;n y performance de su indicador le solicitaremos en (en la seccion importaci&oacute;n de datos) que nos provea el valor esperado de cada indicador en manera mensual, por ejemplo: "El tiempo de espera debe ser <u>menor</u> a <u>10</u> minutos". </p>
+                    <span class="help-block">Por favor indiquenos el modo de comparaci&oacute;n con el valor esperado</span>
+                    <div class="radio">
+                        <label>
+                            <input type="radio" name="menorQue" id="menorQue" value="less"> Menor que el valor esperado
+                        </label>
+                    </div>
+                    <span class="help-block" for="menorQue">El tiempo de espera debe ser menor que 10 minutos. Cuando el valor real del indicador supere el valor esperado, <strong>el indicador esta performando mal</strong></span>
+                    <div class="radio">
+                        <label>
+                            <input type="radio" name="igualQue" id="igualQue" value="equal"> Igual que el valor esperado 
+                        </label>
+                    </div>
+                    <span class="help-block" for="igualQue">Las ventas mensuales deben alcanzar el valor de $50.000 dolares. Cuando el valor real del indicador supere el valor esperado, <strong>el indicador esta performando mejor de lo esperado</strong></span>
+
+                    <h3>Importaci&oacute;n de datos</h3>
+                    <button type="button" class="btn btn-secondary center-block">Configurar importaci&oacute;n de datos</button>
+                    <span class="help-block">Este bot&oacute;n iniciar&aacute; nuestra aplicaci&oacute;n de recolecci&oacute;n de datos en su computadora. Si no posee la aplicaci&oacute;n, puede bajarla realizando click <a href="">aqu&iacute;</a></span>
+                </div>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-default">Cancelar</button>
+                    <button type="submit" class="btn btn-primary pull-right">Guardar</button>
+                </div>                
+            </form>                    
+        </div>
+    </div>
+</div>
+
+

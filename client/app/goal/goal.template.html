@@ -1,0 +1,36 @@
+<div class="row">
+    <div class="col-xs-12">
+        <div class="box box-success goal">
+           <div class="box-header with-border">
+                <h3 class="box-title" [innerHtml]="goal.title"></h3>
+                <div class="box-tools pull-right">
+                    <button type="button" data-widget="collapse" class="btn btn-box-tool"><i class="fa fa-minus"></i></button>  
+                </div>                    
+            </div>
+            <div class="box-body">
+                <div class="row">
+                    <div class="col-md-8 col-xs-12">
+                        <line-chart [config]="chartConfig"></line-chart>
+                    </div>
+                    <div class="col-md-4 col-xs-12">
+                        <p class="text-center"><strong>Indicadores</strong></p>
+                        <a *ngFor="let indicator of goal.indicators" [routerLink]="['indicators',indicator.indicator.id]">
+                            <div  class="progress-group">
+                                <span class="progress-text" [innerHTML]="indicator.indicator.title"></span>
+                                <span class="progress-number"><strong>{{ indicator.indicator.values[0].value + ' ' + indicator.indicator.unit  }}</strong></span>
+                                <div class="progress sm">
+                                    <div class="progress-bar" [ngClass]="'progress-bar-' + indicator.performance.semaphoreStatus" [ngStyle]="{'width': indicator.performance.value + 'px'}"></div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-xs-12">
+        <router-outlet></router-outlet>
+    </div>
+</div>

@@ -1,0 +1,42 @@
+{
+  "name": "cmi-dashboard",
+  "version": "1.0.0",
+  "description": "Web for CMI Dashboard ",
+  "main": "index.js",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "moment": "^2.17.1",
+    "pug": "^2.0.0-beta6",
+    "seneca": "^3.2.2",
+    "seneca-basic": "^0.5.0",
+    "seneca-entity": "^1.3.0",
+    "seneca-web": "^2.0.0",
+    "seneca-web-adapter-express": "^1.0.2",
+    "zone.js": "^0.7.6"
+  },
+  "scripts": {
+    "test": "test",
+    "start": "cd ./client && gulp build && cd .. && node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gastonadrian/cmi-data-collector.git"
+  },
+  "keywords": [
+    "cmi",
+    "dashboard",
+    "isi",
+    "2016",
+    "web"
+  ],
+  "author": "Gaston Moreno & Roberto Cabrera",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gastonadrian/cmi-data-collector/issues"
+  },
+  "homepage": "https://github.com/gastonadrian/cmi-data-collector#readme",
+  "devDependencies": {
+    "@types/moment": "^2.13.0"
+  }
+}

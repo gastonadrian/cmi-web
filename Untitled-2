@@ -1,0 +1,52 @@
+4.2
+
+    PMO self - service
+        ui for user management
+            currently they can only send emails (send invitation, reset password)
+        
+        it will alow to add users (previously only by db script)
+        
+        bulk import users
+        
+        more options on grid
+            activate
+
+        users groups 
+            permissions by module
+
+        Roles
+            import
+                which action they can do on any field (view/edit/hidden)
+
+            assignments
+                import 
+                    hierarchy Roles (creation)
+                        from which node they can see
+                        which thing they can do
+                        if they can see cost attributes.
+
+
+                    tags based
+                        ex: they can see all the analists on the org.
+
+    Reports
+
+        from user groups
+        interactive charts that can relate to
+            data positions (redirect to spcific position)
+        
+        tableau integration
+            snapshot db
+            iframe based
+
+        export information
+    
+    Standalone app
+
+        local
+        licensing
+    
+    Dashboard
+
+        Metrics restyling
+    

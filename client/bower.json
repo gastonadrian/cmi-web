@@ -1,0 +1,28 @@
+{
+  "name": "cmi-dashboard",
+  "description": "cmi web dashboard",
+  "main": "",
+  "authors": [
+    "Gaston Moreno <gastonadrian@gmail.com>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "cmi",
+    "web",
+    "dashboard",
+    "isi",
+    "2016"
+  ],
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "^3.3.7"
+  }
+}

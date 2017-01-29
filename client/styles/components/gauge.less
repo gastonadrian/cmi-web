@@ -1,0 +1,34 @@
+/*
+ * Component: gauge
+ * ----------------
+ */
+
+@import "../modules/variables.less";
+
+.gauge{
+
+    .chart{
+        width: 400px;
+        margin: 100px auto  
+    } 
+
+    .chart-filled.green{
+        fill: @green;
+    }
+
+    .chart-filled.yellow{
+        fill: @yellow;
+    }
+    .chart-filled.red{
+        fill: @red;
+    }
+    .chart-empty{
+        fill: @gray;
+    }
+
+    .needle, .needle-center{
+        fill: #464A4F;
+    }
+
+}
+

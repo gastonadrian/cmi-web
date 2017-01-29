@@ -1,0 +1,134 @@
+<div class="row">
+    <div class="col-xs-12 col-sm-10">
+        <div class="box box-primary">
+            <form>
+                <div #container class="box-body">
+                    <div class="form-group">
+                        <label for="" class="control-label">Nombre</label>
+                        <input type="text" class="form-control" value="Satisfacción del cliente">
+                    </div>
+                    <div class="form-group">
+                        <label for="" class="control-label">Perspectiva</label>
+                        <select name="" id="" class="form-control">
+                            <option value="">Financiera</option>
+                            <option value="" selected="selected">Clientes</option>
+                            <option value="">Procesos</option>
+                            <option value="">Aprendizaje</option>
+                        </select>
+                    </div>
+                    <h3>Indicadores del objetivo</h3>
+                    <table #goalIndicatorsTable class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Unidad</th>
+                                <th>Consolidado</th>
+                                <th>Acciones</th>                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>cantidad de descuentos presentados</td>
+                                <td>valor</td>
+                                <td>suma</td>
+                                <td>
+                                    <button type="button" class="btn btn-default"><i class="fa fa-pencil text-yellow"></i> Editar</button>
+                                    <button type="button" class="btn btn-default"><i class="fa fa-trash-o text-red"></i> Eliminar</button>
+                                </td>
+                            </tr>                            
+                        </tbody>
+                    </table>                    
+                    <h3>Indicadores en el sistema</h3>
+                    <table #indicatorsTable class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Unidad</th>
+                                <th>Consolidado</th>
+                                <th>Acciones</th>                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>% Ingresos por pedidos</td>
+                                <td>%</td>
+                                <td>promedio</td>
+                                <td>
+                                    <button type="button" class="btn btn-default"><i class="fa fa-plus text-green"></i> Asociar</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>calidad del servicio</td>
+                                <td>valor</td>
+                                <td>promedio</td>
+                                <td>
+                                    <button type="button" class="btn btn-default"><i class="fa fa-plus text-green"></i> Asociar</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Producción por empleado</td>
+                                <td>valor</td>
+                                <td>promedio</td>
+                                <td>
+                                    <button type="button" class="btn btn-default"><i class="fa fa-plus text-green"></i> Asociar</button>
+                                </td>
+                            </tr>
+                            <tr class="active">
+                                <td>tiempo de respuesta de quejas</td>
+                                <td>minutos</td>
+                                <td>promedio</td>
+                                <td>
+                                    <button type="button" class="btn btn-default"><i class="fa fa-plus text-green"></i> Asociar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Configurar Indicador: <strong>tiempo de respuesta de quejas</strong></h3>
+                    <div class="form form-horizontal">
+                        <div class="form-group">                          
+                            <label for="" class="col-xs-12 col-sm-4 control-label">Valor esperado para el trimestre actual</label>
+                            <div class="col-sm-6 col-xs-10 input-group">
+                                <input type="text" class="form-control" value="10">
+                                <span class="input-group-addon">minutos</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="control-label col-xs-12 col-sm-4">Ponderaci&oacute;n dentro del objetivo</label>
+                            <div class="col-xs-10 col-sm-6">
+                                <input type="text" class="form-control" value="1">
+                            </div>
+                        </div>
+                        <h4>Necesitamos nos indique como configurar el semaforo para el indicador (por defecto utilizamos los valores que configuro en sem&aacute;foro global)</h4>
+                        <div class="form-group">
+                            <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en rojo desde 0% hasta </label>
+                            <div class="col-xs-10 col-sm-6">
+                                <input type="text" class="form-control" value="30%">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en amarillo desde 31% hasta </label>
+                            <div class="col-xs-10 col-sm-6">
+                                <input type="text" class="form-control" value="59%">
+                            </div>
+                        </div>
+
+                        <p><strong>Su configuracion:</strong></p>
+                        <ul>
+                            <li>Si el valor es menor a 10 minutos, el sem&aacute;foro sera verde</li>
+                            <li>Si el valor es mayor o igual a 10 minutos el sem&aacute;foro ser&aacute; amarillo o rojo (de acuerdo al m&aacute;ximo valor posible)</li>
+                        </ul>
+                            <button class="btn btn-success pull-right">Guardar Indicador</button>
+                    </div>
+
+                </div>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-default">Cancelar</button>
+                    <button type="submit" class="btn btn-primary pull-right">Guardar</button>
+                </div>                
+            </form>                    
+        </div>
+    </div>
+</div>
+
+
