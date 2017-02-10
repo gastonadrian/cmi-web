@@ -1,6 +1,16 @@
 <section class="content-header">
     <h1 [innerHtml]="title"></h1>
 </section>
+<section class="content-header">
+    <form class="form-inline">
+    <div class="form-group">
+        <label for="exampleInputName2">Periodo Visible</label>
+        <select class="form-control" [ngModel]="selectedPeriod" (ngModelChange)="selectPeriod($event)" name="dataPeriodSelect">
+            <option [ngValue]="period" *ngFor="let period of dataPeriods" [innerHtml]="period.legend"></option>
+        </select>
+    </div>
+    </form>
+</section>
 <section class="content">
     <router-outlet></router-outlet>
 </section>

@@ -1,0 +1,31 @@
+<div class="col-md-6 col-xs-12">
+    <div class="box box-success" [ngClass]="{ 'box-success': perspective.performance.semaphoreStatus === 'green', 'box-warning': perspective.performance.semaphoreStatus === 'yellow','box-danger': perspective.performance.semaphoreStatus === 'red'}">
+        <div class="box-header with-border">
+            <h3 class="box-title">{{perspective.title}}</h3>
+            <div class="box-tools pull-right">
+                <button class="btn btn-box-tool" type="button" data-widget="collapse"><i class="fa fa-minus"></i></button>
+            </div>
+        </div>
+        <div class="box-body">
+            <div class="row">
+                <div class="col-md-6 col-xs-12">
+                    <gauge-chart [config]="{ status: perspective.performance.semaphoreStatus, percent: perspective.performance.value }"></gauge-chart>
+                </div>
+                <div class="col-md-6 col-xs-12">
+                    <p class="text-center">
+                        <strong>Objetivos</strong>
+                    </p>
+                    <a *ngFor="let goal of perspective.goals" [routerLink]="['../goals', goal.id]">
+                        <div  class="progress-group">
+                            <span class="progress-text" [innerHTML]="goal.title"></span>
+                            <span class="progress-number"><strong>{{ goal.performance?.value | number:'1.0-0' }} %</strong></span>
+                            <div class="progress sm">
+                                <div class="progress-bar" [ngClass]="'progress-bar-' + goal.performance?.semaphoreStatus" [ngStyle]="{'width': goal.performance?.value + '%'}"></div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

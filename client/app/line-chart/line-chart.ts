@@ -1,6 +1,5 @@
 import { Component, Input, ElementRef, AfterViewInit, ViewChild,  OnChanges } from '@angular/core';
 import { LineChartConfig } from '../shared/models/line-chart-config';
-// import * as nv from 'nvd3';
 
 declare let d3:any;
 declare let moment:any;

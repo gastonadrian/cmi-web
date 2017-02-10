@@ -1,5 +1,7 @@
+
 export class Performance{
     constructor(public dateFrom:number, public value:number, public semaphoreStatus:string, public dateTo?:number){
+        // this.value = this.value * 100;
     }
 }
 
@@ -7,7 +9,18 @@ export class DateValue{
     constructor(public date:Date, public value:number, public expected?:number){}
 }
 
+export class DataPeriod{
+    constructor(public id:string, public legend:string, public start:Date, public end:Date){
+    }
+}
+
+declare let dataPeriods:any;
+
 export class AppSettings{
+    
+    public static dateFormat:string = 'YYYYMMDD';
+    public static dataPeriods:Array<any> = dataPeriods;
+
     public static DataTableLangConfig:any ={
         "sProcessing":     "Procesando...",
         "sLengthMenu":     "Mostrar _MENU_ registros",

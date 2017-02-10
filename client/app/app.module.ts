@@ -1,13 +1,16 @@
 import { BrowserModule, Title  } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
-import { LineChartComponent } from './line-chart/line-chart'
+import { LineChartComponent } from './line-chart/line-chart';
+import { GaugeChartComponent } from './gauge-chart/gauge-chart';
 import { HttpModule } from '@angular/http';
 
-import { GoalService, IndicatorService, PerspectiveService } from './shared/services/';
+import { GoalService, IndicatorService, PerspectiveService, DashboardService, DataPeriodService } from './shared/services/';
 
 import { DashboardComponent } from './dashboard/dashboard';
+import { DashboardPerspectiveComponent } from './dashboard/dashboard-perspective.component';
 import { GoalComponent } from './goal/goal.component';
 import { IndicatorGridComponent } from './indicator/indicator-grid.component';
 import { IndicatorCreateComponent } from './indicator/indicator-create.component';
@@ -15,10 +18,9 @@ import { SemaphoreComponent } from './semaphore/semaphore.component';
 import { GoalCreateComponent } from './goal/goal-create.component';
 import { PerspectiveComponent } from './perspective/perspective.component';
 
-
 import { GoalResolver } from './shared/services/goal-route-resolver';
 import { IndicatorGridResolver } from './shared/services/indicator-grid-route-resolver';
-
+import { DashboardResolver } from './shared/services/dashboard-route-resolver';
 
 
 const appRoutes: Routes = [
@@ -28,7 +30,10 @@ const appRoutes: Routes = [
     data:{
       title:'Cuadro de Mando Integral',
       description:'Ve el estado de tus indicadores'
-    }
+    },
+    resolve:{
+      perspectives: DashboardResolver
+    }    
   },
   { 
     path: 'goals/:goalid', 
@@ -99,10 +104,13 @@ const appRoutes: Routes = [
     IndicatorCreateComponent,
     SemaphoreComponent,
     GoalCreateComponent,
-    PerspectiveComponent
+    PerspectiveComponent,
+    GaugeChartComponent,
+    DashboardPerspectiveComponent
   ],
   imports: [
     BrowserModule,
+    FormsModule,
     HttpModule,
     RouterModule.forRoot(appRoutes)
   ],
@@ -112,7 +120,10 @@ const appRoutes: Routes = [
     GoalResolver, 
     IndicatorService, 
     IndicatorGridResolver,
-    PerspectiveService
+    PerspectiveService,
+    DashboardResolver,
+    DashboardService,
+    DataPeriodService
   ],
   bootstrap: [AppComponent]
 })

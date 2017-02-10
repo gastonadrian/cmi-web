@@ -52,10 +52,6 @@ export class PerspectiveComponent implements OnInit, AfterViewInit{
           });
         }
 
-// eliminar
-// configurar (en amarillo)
-// agregar
-
      });
   }
 }

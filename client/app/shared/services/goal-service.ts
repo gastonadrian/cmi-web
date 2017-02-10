@@ -30,7 +30,6 @@ export class GoalService {
       let result = new Goal();      
       result.id = tmpResult.id;
       result.title = tmpResult.title;
-    //   result.performance = new Performance();
       result.values = tmpResult.values.map( (values:any) => {  return new DateValue(values[0], values[1]); });
       result.indicators = new Array<GoalIndicator>();
       for(var i=0; i < tmpResult.indicators.length; i++){
