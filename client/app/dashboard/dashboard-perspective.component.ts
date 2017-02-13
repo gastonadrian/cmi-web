@@ -1,6 +1,6 @@
 import { Component, OnChanges, Input } from '@angular/core';
 import { Goal }  from './../shared/models/goal';
-import { Performance }  from './../shared/models/shared';
+import { Performance, AppSettings }  from './../shared/models/shared';
 import { Perspective }  from './../shared/models/perspective';
 import { GaugeChartConfig } from './../shared/models/gauge-chart-config';
 
@@ -27,8 +27,12 @@ export class DashboardPerspectiveComponent implements OnChanges {
         if (!this.perspective.performance){
             return;
         }
-        this.gaugeConfig.status = this.perspective.performance.semaphoreStatus;
+        this.gaugeConfig.status = this.getSemaphoreStatusColour(this.perspective.performance.semaphoreStatus);
         this.gaugeConfig.percent = this.perspective.performance.value;
+    }
+
+    getSemaphoreStatusColour(semaphoreValue:number):string{
+        return AppSettings.semaphoreStatusText[semaphoreValue];
     }
 
 }

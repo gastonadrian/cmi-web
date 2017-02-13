@@ -1,30 +1,28 @@
-function utils(){
+module.exports = function utils(){
     var moment = require('moment');
 
     function getDataPeriods(){
 
         // 1) obtener la fecha del ultimo dato disponible 
         // feb 8
-
         var lastDate = new Date(),
             legendFormat = 'YYYY-MM-DD',
-            currentYearStart = new Date(moment(lastDate).startOf('year')),
-            currentQuarterStart = new Date(moment(lastDate).startOf('quarter')),
+            currentYearStart = new Date(moment(lastDate).startOf('year').toISOString()),
+            currentQuarterStart = new Date(moment(lastDate).startOf('quarter').toISOString()),
             currentSemesterStart = new Date(lastDate),
             currentSemester = getSemester(currentSemesterStart),
             previousYearStart = new Date(moment(currentYearStart).year()-1, 0, 1),
             previousYearEnd = new Date(moment(currentYearStart).year()-1, 11, 31),
             previousSemesterEnd = new Date(currentSemester.start),
-            previousSemester;
             previousSemester = getSemester(moment(previousSemesterEnd).subtract(1, 'day')),
-            previousQuarterEnd = new Date(moment(currentQuarterStart).subtract(1, 'day')),
-            previousQuarterStart = new Date(moment(previousQuarterEnd).startOf('quarter')),
-            secondPreviousQuarterEnd = new Date(moment(previousQuarterStart).subtract(1, 'day')),
-            secondPreviousQuarterStart = new Date(moment(secondPreviousQuarterEnd).startOf('quarter')),
-            thirdPreviousQuarterEnd = new Date(moment(secondPreviousQuarterStart).subtract(1, 'day')),
-            thirdPreviousQuarterStart = new Date(moment(thirdPreviousQuarterEnd).startOf('quarter')),
-            fourthPreviousQuarterEnd = new Date(moment(thirdPreviousQuarterStart).subtract(1, 'day')),
-            fourthPreviousQuarterStart = new Date(moment(fourthPreviousQuarterEnd).startOf('quarter'));
+            previousQuarterEnd = new Date(moment(currentQuarterStart).subtract(1, 'day').toISOString()),
+            previousQuarterStart = new Date(moment(previousQuarterEnd).startOf('quarter').toISOString()),
+            secondPreviousQuarterEnd = new Date(moment(previousQuarterStart).subtract(1, 'day').toISOString()),
+            secondPreviousQuarterStart = new Date(moment(secondPreviousQuarterEnd).startOf('quarter').toISOString()),
+            thirdPreviousQuarterEnd = new Date(moment(secondPreviousQuarterStart).subtract(1, 'day').toISOString()),
+            thirdPreviousQuarterStart = new Date(moment(thirdPreviousQuarterEnd).startOf('quarter').toISOString()),
+            fourthPreviousQuarterEnd = new Date(moment(thirdPreviousQuarterStart).subtract(1, 'day').toISOString()),
+            fourthPreviousQuarterStart = new Date(moment(fourthPreviousQuarterEnd).startOf('quarter').toISOString());
             
         return {
             currentYear:{
@@ -75,24 +73,18 @@ function utils(){
         };
     }
 
-    function getPeriodFromParams(requestParameters){
-        var to,
-            from,
-            periodLegend,
+    function getPeriodFromParams(from, to){
+        var periodLegend,
             dataPeriods = getDataPeriods();
 
         // determinando cual es el periodo de tiempo que solicitaremos
-        if(requestParameters.to && requestParameters.from && moment(requestParameters.to).isValid() &&  moment(requestParameters.from).isValid()){
-            to = requestParameters.to;
-            from = requestParameters.from;
-        } else {
+        if(!moment(to).isValid() || !moment(from).isValid()){
             periodLegend = 'currentYear';
             to = moment(dataPeriods[periodLegend].to).format('YYYYMMDD');
             from = moment(dataPeriods[periodLegend].from).format('YYYYMMDD');
         }
 
         return {
-            legend: periodLegend,
             to: to,
             from: from
         };
@@ -108,8 +100,8 @@ function utils(){
      *      enero- fin de junio
      *      julio- fin de diciembre
      */
-    function getSemester(date){
-        var copy = new Date(moment(date).startOf('quarter')),
+    function  getSemester(date){
+        var copy = new Date(moment(date).startOf('quarter').toISOString()),
             currentYear= moment(copy).year();
 
         if(moment(copy).month() == 0 || moment(copy).month() == 2){
@@ -127,13 +119,10 @@ function utils(){
             };
         }
     }
-    
 
     return {
         getDataPeriods: getDataPeriods,
         getPeriodFromParams: getPeriodFromParams
     };
 
-}
-
-module.exports = utils;
+}()

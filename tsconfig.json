@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "lib": ["es2015","es5"],
+    "allowJs": true,
+    "declaration": false,
+    "noImplicitAny": false,
+    "suppressImplicitAnyIndexErrors": true,
+    "typeRoots": [
+      "./node_modules/@types/"
+    ],
+    "outDir": "./bin"
+  },
+  "files": [
+    "app.ts",
+    "api/models/index",
+    "api/services/index"
+  ]
+}

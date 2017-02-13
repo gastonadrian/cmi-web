@@ -1,5 +1,5 @@
 <div class="col-md-6 col-xs-12">
-    <div class="box box-success" [ngClass]="{ 'box-success': perspective.performance.semaphoreStatus === 'green', 'box-warning': perspective.performance.semaphoreStatus === 'yellow','box-danger': perspective.performance.semaphoreStatus === 'red'}">
+    <div class="box box-success" [ngClass]="{ 'box-success': perspective.performance.semaphoreStatus === 1, 'box-warning': perspective.performance.semaphoreStatus === 2,'box-danger': perspective.performance.semaphoreStatus === 3}">
         <div class="box-header with-border">
             <h3 class="box-title">{{perspective.title}}</h3>
             <div class="box-tools pull-right">
@@ -9,7 +9,7 @@
         <div class="box-body">
             <div class="row">
                 <div class="col-md-6 col-xs-12">
-                    <gauge-chart [config]="{ status: perspective.performance.semaphoreStatus, percent: perspective.performance.value }"></gauge-chart>
+                    <gauge-chart [config]="gaugeConfig"></gauge-chart>
                 </div>
                 <div class="col-md-6 col-xs-12">
                     <p class="text-center">
@@ -20,7 +20,7 @@
                             <span class="progress-text" [innerHTML]="goal.title"></span>
                             <span class="progress-number"><strong>{{ goal.performance?.value | number:'1.0-0' }} %</strong></span>
                             <div class="progress sm">
-                                <div class="progress-bar" [ngClass]="'progress-bar-' + goal.performance?.semaphoreStatus" [ngStyle]="{'width': goal.performance?.value + '%'}"></div>
+                                <div class="progress-bar" [ngClass]="'progress-bar-' + getSemaphoreStatusColour(goal.performance?.semaphoreStatus)" [ngStyle]="{'width': goal.performance?.value + '%'}"></div>
                             </div>
                         </div>
                     </a>

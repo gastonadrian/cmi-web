@@ -1,6 +1,6 @@
 
 export class Performance{
-    constructor(public dateFrom:number, public value:number, public semaphoreStatus:string, public dateTo?:number){
+    constructor(public dateFrom:number, public value:number, public semaphoreStatus:number, public dateTo?:number){
         // this.value = this.value * 100;
     }
 }
@@ -20,6 +20,8 @@ export class AppSettings{
     
     public static dateFormat:string = 'YYYYMMDD';
     public static dataPeriods:Array<any> = dataPeriods;
+
+    public static semaphoreStatusText:Array<string> = ['','green','yellow','red'];
 
     public static DataTableLangConfig:any ={
         "sProcessing":     "Procesando...",

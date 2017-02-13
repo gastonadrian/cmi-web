@@ -30,6 +30,7 @@ var express = require('express'),
     .use( 'entity' )
     .use( './api/index' )
     .use( './api/dashboard.service' )
+    .use( './api/goal.service' )
     .client( { type:'tcp',  pin:'role:api' } );
 
   function getGoals(){
@@ -166,6 +167,7 @@ var express = require('express'),
         {
             id: 1,
             label: '% Productos defectuosos',
+            goals:[1],
             unit:{
                 type: 'percentage',
                 title: '%'
