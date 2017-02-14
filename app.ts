@@ -2,11 +2,13 @@ import * as express from 'express';
 import * as SENECA from 'seneca';
 import senecaWeb = require('seneca-web');
 import utils = require('./api/utils');
+import dotenv = require('dotenv');
 
 // the following packages are loaded only because we need tsc to move them to /bin
-import dashboard = require('./api/dashboard');
+import perspective = require('./api/perspective.api');
 import apiIndex = require('./api/index');
 
+dotenv.load();
 let router:any = express.Router;
 let context:any = new router();
 let seneca:SENECA.Instance = SENECA();
@@ -34,7 +36,7 @@ seneca
     .use( senecaWeb, senecaWebConfig )
     .use( 'entity' )
     .use( './api/index' )
-    .use( './api/dashboard' )
+    .use( './api/perspective.api' )
     .client( { type:'tcp',  pin:'role:api' } );
     
 app.get('/', function (req:any, res:any) {

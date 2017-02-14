@@ -1,12 +1,12 @@
 "use strict";
 var MongoGoal = (function () {
-    function MongoGoal(_id, customerId, title, perspectiveId, semaphoreRedUntil, semaphoreYellowuntil) {
-        this._id = _id;
+    function MongoGoal(customerId, title, perspectiveId, semaphoreRedUntil, semaphoreYellowuntil, active) {
         this.customerId = customerId;
         this.title = title;
         this.perspectiveId = perspectiveId;
         this.semaphoreRedUntil = semaphoreRedUntil;
         this.semaphoreYellowuntil = semaphoreYellowuntil;
+        this.active = active;
         this.semaphore = {
             redUntil: semaphoreRedUntil,
             yellowUntil: semaphoreYellowuntil

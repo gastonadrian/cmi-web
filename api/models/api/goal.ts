@@ -13,7 +13,7 @@ export class GoalApiResult{
         public _id:string,
         public customerId:string,
         public title:string,
-        public perspectiveId:number,
+        public perspectiveId:string,
         public performance: IPerformance
     ){
         

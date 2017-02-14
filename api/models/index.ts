@@ -6,3 +6,4 @@ export * from './mongo/indicator-data';
 export * from './mongo/perspective';
 export * from './api/indicator';
 export * from './api/goal';
+export * from './api/perspective';

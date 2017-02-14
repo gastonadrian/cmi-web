@@ -1,6 +1,5 @@
 module.exports = function utils(){
     var moment = require('moment');
-
     function getDataPeriods(){
 
         // 1) obtener la fecha del ultimo dato disponible 
@@ -84,6 +83,9 @@ module.exports = function utils(){
             from = moment(dataPeriods[periodLegend].from).format('YYYYMMDD');
         }
 
+        to = new Date(moment(to).toISOString());
+        from = new Date(moment(from).toISOString());
+
         return {
             to: to,
             from: from
@@ -120,9 +122,14 @@ module.exports = function utils(){
         }
     }
 
+    function getConnString(  ) {
+        return `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_HOST}:${process.env.MONGO_PORT}/${process.env.MONGO_DB}`;
+    }
+
     return {
         getDataPeriods: getDataPeriods,
-        getPeriodFromParams: getPeriodFromParams
+        getPeriodFromParams: getPeriodFromParams,
+        getConnString: getConnString
     };
 
 }()

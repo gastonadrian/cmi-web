@@ -1,12 +1,11 @@
 "use strict";
-var Perspective = (function () {
-    function Perspective(_id, customerId, title, semaphore) {
-        this._id = _id;
+var MongoPerspective = (function () {
+    function MongoPerspective(customerId, title, semaphore) {
         this.customerId = customerId;
         this.title = title;
         this.semaphore = semaphore;
     }
-    return Perspective;
+    return MongoPerspective;
 }());
-exports.Perspective = Perspective;
+exports.MongoPerspective = MongoPerspective;
 //# sourceMappingURL=perspective.js.map

@@ -1,16 +1,19 @@
 import { ISemaphoreConfig } from './../shared';
+import { ObjectID } from 'mongodb';
 
 export class MongoGoal{
+    
+    public _id:ObjectID;
 
     public semaphore:ISemaphoreConfig;
 
     constructor(
-        public _id:string,
         public customerId:string,
         public title:string,
-        public perspectiveId:number,
+        public perspectiveId:string,
         private semaphoreRedUntil:number,
-        private semaphoreYellowuntil:number
+        private semaphoreYellowuntil:number,
+        public active?:Boolean
     ){
         this.semaphore = {
             redUntil: semaphoreRedUntil,

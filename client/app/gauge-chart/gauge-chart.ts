@@ -51,7 +51,7 @@ export class GaugeChartComponent implements OnChanges, AfterViewInit {
      * Everythime the @Input is updated, we rebuild the chart
     **/
     ngOnChanges(changes: any): void {
-      console.log(this.config.percent);
+      // console.log(this.config.percent);
         if (!this.config.percent || !this.host){
             return;
         }

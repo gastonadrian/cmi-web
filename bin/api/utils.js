@@ -60,6 +60,8 @@ module.exports = function utils() {
             to = moment(dataPeriods[periodLegend].to).format('YYYYMMDD');
             from = moment(dataPeriods[periodLegend].from).format('YYYYMMDD');
         }
+        to = new Date(moment(to).toISOString());
+        from = new Date(moment(from).toISOString());
         return {
             to: to,
             from: from
@@ -92,9 +94,13 @@ module.exports = function utils() {
             };
         }
     }
+    function getConnString() {
+        return "mongodb://" + process.env.MONGO_USER + ":" + process.env.MONGO_PASSWORD + "@" + process.env.MONGO_HOST + ":" + process.env.MONGO_PORT + "/" + process.env.MONGO_DB;
+    }
     return {
         getDataPeriods: getDataPeriods,
-        getPeriodFromParams: getPeriodFromParams
+        getPeriodFromParams: getPeriodFromParams,
+        getConnString: getConnString
     };
 }();
 //# sourceMappingURL=utils.js.map

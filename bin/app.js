@@ -3,6 +3,8 @@ var express = require("express");
 var SENECA = require("seneca");
 var senecaWeb = require("seneca-web");
 var utils = require("./api/utils");
+var dotenv = require("dotenv");
+dotenv.load();
 var router = express.Router;
 var context = new router();
 var seneca = SENECA();
@@ -27,7 +29,7 @@ seneca
     .use(senecaWeb, senecaWebConfig)
     .use('entity')
     .use('./api/index')
-    .use('./api/dashboard')
+    .use('./api/perspective.api')
     .client({ type: 'tcp', pin: 'role:api' });
 app.get('/', function (req, res) {
     var dataPeriods = JSON.stringify(utils.getDataPeriods());

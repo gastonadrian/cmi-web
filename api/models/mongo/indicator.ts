@@ -2,15 +2,19 @@ import { ISemaphoreConfig,
     Operations,
     IDataDefinition,
     IDataSource } from './../shared';
+import { ObjectID } from 'mongodb';
 
 export class MongoIndicator{
+    
+    public _id:ObjectID;
 
     public semaphore:ISemaphoreConfig;
     public data: IDataDefinition;
     public datasource: IDataSource;
 
+
+
     constructor(
-        public _id:string,
         public customerId:string,
         public goalIds: Array<string>,
         public title:string,

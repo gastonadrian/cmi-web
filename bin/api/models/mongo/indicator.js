@@ -1,7 +1,6 @@
 "use strict";
 var MongoIndicator = (function () {
-    function MongoIndicator(_id, customerId, goalIds, title, performanceComparison, dataType, dataOperation, dataTitle, semaphoreRedUntil, semaphoreYellowuntil, dataSourceId, datasourceTable, dataSourceColumn, dataSourceDateColumn, dataSourceRowOperation) {
-        this._id = _id;
+    function MongoIndicator(customerId, goalIds, title, performanceComparison, dataType, dataOperation, dataTitle, semaphoreRedUntil, semaphoreYellowuntil, dataSourceId, datasourceTable, dataSourceColumn, dataSourceDateColumn, dataSourceRowOperation) {
         this.customerId = customerId;
         this.goalIds = goalIds;
         this.title = title;

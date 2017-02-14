@@ -1,7 +1,8 @@
 "use strict";
 var MongoGoalIndicator = (function () {
-    function MongoGoalIndicator(indicatorId, goalId, factor) {
+    function MongoGoalIndicator(indicatorId, customerId, goalId, factor) {
         this.indicatorId = indicatorId;
+        this.customerId = customerId;
         this.goalId = goalId;
         this.factor = factor;
     }

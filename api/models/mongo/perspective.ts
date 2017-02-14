@@ -1,8 +1,11 @@
 import { ISemaphoreConfig } from './../shared';
-export class Perspective{
+import { ObjectID } from 'mongodb';
+
+export class MongoPerspective{
+
+    public _id:ObjectID;
 
     constructor(
-    public _id:string,
     public customerId:string,
     public title:string,
     public semaphore:ISemaphoreConfig){}

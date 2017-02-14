@@ -10,4 +10,5 @@ __export(require("./mongo/indicator-data"));
 __export(require("./mongo/perspective"));
 __export(require("./api/indicator"));
 __export(require("./api/goal"));
+__export(require("./api/perspective"));
 //# sourceMappingURL=index.js.map
