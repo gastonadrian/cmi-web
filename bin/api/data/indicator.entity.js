@@ -67,6 +67,14 @@ var IndicatorDataService = (function () {
         };
         return mongoControl.find(findParams);
     };
+    IndicatorDataService.insertIndicator = function (indicator) {
+        var params = {
+            db: utils.getConnString(),
+            collection: 'indicators',
+            data: [indicator]
+        };
+        return mongoControl.insert(params);
+    };
     IndicatorDataService.insertIndicatorData = function (indicatorDataArray) {
         var params = {
             db: utils.getConnString(),

@@ -1,6 +1,5 @@
 module.exports = function perspectiveApi(){
     let perspectiveService = require('./services/perspective.service').PerspectiveService;
-    let moment = require('moment');
 
     this.add('role:dashboard,cmd:index', getDashboard);
 

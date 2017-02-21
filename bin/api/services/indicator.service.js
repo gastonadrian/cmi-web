@@ -1,8 +1,8 @@
 "use strict";
 var _ = require("lodash");
+var moment = require("moment");
 var indicator_entity_1 = require("./../data/indicator.entity");
 var shared_1 = require("./../models/shared");
-var indicator_1 = require("./../models/api/indicator");
 var IndicatorService = (function () {
     function IndicatorService() {
     }
@@ -31,11 +31,35 @@ var IndicatorService = (function () {
                 //calculate performance for each indicator
                 for (var i = 0; i < indicators.length; i++) {
                     var performance = self.calculateIndicatorPerformance(indicators[i], _.filter(indicatorsData, _.matches({ indicatorId: indicators[i]._id.toString() })));
-                    indicatorsResult.push(new indicator_1.IndicatorApiResult(indicators[i]._id.toString(), indicators[i].customerId, indicators[i].goalIds, indicators[i].title, performance));
+                    indicatorsResult.push(_.extend(indicators[i], { performance: performance, id: indicators[i]._id.toString() }));
                 }
                 return indicatorsResult;
             });
         });
+    };
+    IndicatorService.createIndicator = function (customerId, indicator) {
+        indicator.customerId = customerId;
+        if (!(indicator.title.length
+            && indicator.data && indicator.data.title.length
+            && (indicator.performanceComparison === shared_1.PerformanceComparisons.lessThan || indicator.performanceComparison === shared_1.PerformanceComparisons.equals)
+            && indicator.datasource && (indicator.datasource.columnOperation === shared_1.Operations.plus || indicator.datasource.columnOperation === shared_1.Operations.average))) {
+            ;
+            return new Promise(function (resolve, reject) {
+                return reject('Faltan datos');
+            });
+        }
+        return indicator_entity_1.IndicatorDataService.insertIndicator(indicator);
+    };
+    IndicatorService.createIndicatorData = function (customerId, indicatorData) {
+        indicatorData.customerId = customerId;
+        if (!(indicatorData.indicatorId
+            && indicatorData.value
+            && moment(indicatorData.date).isValid())) {
+            return new Promise(function (resolve, reject) {
+                return reject('Faltan datos');
+            });
+        }
+        return indicator_entity_1.IndicatorDataService.insertIndicatorData([indicatorData]);
     };
     /**
      *
@@ -47,8 +71,8 @@ var IndicatorService = (function () {
      */
     IndicatorService.calculateIndicatorPerformance = function (indicator, indicatorData) {
         var result;
-        if (indicator.performanceComparison === 'lessThan'
-            && (indicator.data.operation === shared_1.Operations.plus || indicator.data.operation === shared_1.Operations.average)) {
+        if (indicator.performanceComparison === shared_1.PerformanceComparisons.lessThan
+            && (indicator.datasource.columnOperation === shared_1.Operations.plus || indicator.datasource.columnOperation === shared_1.Operations.average)) {
             result = this.calculateLessThanPerformance(indicator, indicatorData);
         }
         return result;
@@ -90,7 +114,7 @@ var IndicatorService = (function () {
             consolidateData += months[i].value;
             consolidateExpected += months[i].expected;
         }
-        if (indicator.data.operation === shared_1.Operations.average) {
+        if (indicator.datasource.columnOperation === shared_1.Operations.average) {
             consolidateData = consolidateData / months.length;
             consolidateExpected = consolidateExpected / months.length;
         }

@@ -5,7 +5,9 @@ import utils = require('./api/utils');
 import dotenv = require('dotenv');
 
 // the following packages are loaded only because we need tsc to move them to /bin
+import indicator = require('./api/indicator.api');
 import perspective = require('./api/perspective.api');
+import datasource = require('./api/datasource.api');
 import apiIndex = require('./api/index');
 
 dotenv.load();
@@ -30,13 +32,14 @@ app.use(express.static('./client/node_modules'));
 
 app.use( require('body-parser').json() )
     .use( context )
-    .listen(3000);
+    .listen(80);
 
 seneca
     .use( senecaWeb, senecaWebConfig )
-    .use( 'entity' )
     .use( './api/index' )
     .use( './api/perspective.api' )
+    .use( './api/indicator.api' )
+    .use( './api/datasource.api' )
     .client( { type:'tcp',  pin:'role:api' } );
     
 app.get('/', function (req:any, res:any) {

@@ -44,10 +44,9 @@ var GoalService = (function () {
             value: 0
         };
         for (var i = 0; i < indicators.length; i++) {
-            var goalIndicator = indicatorFactors.find(function (goalInd, index) { return goalInd.indicatorId == indicators[i]._id; });
+            var goalIndicator = indicatorFactors.find(function (goalInd, index) { return goalInd.indicatorId == indicators[i].id; });
             result.value += goalIndicator.factor * unitPercentage * indicators[i].performance.value;
         }
-        // so we are on the same scale for comparison (0 to 100)
         result.value = result.value;
         if (result.value <= goal.semaphore.yellowUntil) {
             if (result.value <= goal.semaphore.redUntil) {

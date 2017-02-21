@@ -27,9 +27,10 @@ app.use(require('body-parser').json())
     .listen(3000);
 seneca
     .use(senecaWeb, senecaWebConfig)
-    .use('entity')
     .use('./api/index')
     .use('./api/perspective.api')
+    .use('./api/indicator.api')
+    .use('./api/datasource.api')
     .client({ type: 'tcp', pin: 'role:api' });
 app.get('/', function (req, res) {
     var dataPeriods = JSON.stringify(utils.getDataPeriods());

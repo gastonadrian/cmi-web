@@ -15,6 +15,7 @@ export class AppComponent implements OnInit{
   public routeDescription:string;
   public dataPeriods: Array<DataPeriod> = [];
   public selectedPeriod: DataPeriod;
+  public showPeriods:Boolean;
   
   constructor(
     private route: ActivatedRoute,
@@ -23,6 +24,7 @@ export class AppComponent implements OnInit{
     private dataPeriodService: DataPeriodService) { 
     router.events.subscribe((val) => {
       if(val instanceof NavigationEnd) {
+        this.showPeriods = this.router.routerState.root.firstChild.data['value']['showPeriods'];
         this.title = this.router.routerState.root.firstChild.data['value']['title'];
         this.routeDescription = this.router.routerState.root.firstChild.data['value']['description'];
         this.titleService.setTitle(this.title); 

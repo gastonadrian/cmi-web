@@ -3,7 +3,7 @@ import * as utils from './../utils';
 import { ObjectID } from 'mongodb';
 import { Operations } from './../models/shared';
 
-import { MongoIndicator } from './../models/mongo/indicator';
+import { MongoIndicator } from './../models/mongo/indicator.mongo';
 import { MongoIndicatorData} from './../models/mongo/indicator-data';
 import { MongoGoalIndicator } from './../models/mongo/goal-indicator';
 
@@ -79,6 +79,18 @@ export class IndicatorDataService{
         };
         
         return mongoControl.find(findParams);
+    }
+
+
+    static insertIndicator(indicator:MongoIndicator):Promise<any>{
+
+        let params:any = {
+            db: utils.getConnString(),
+            collection: 'indicators',
+            data: [indicator]
+        };
+
+        return mongoControl.insert(params);
     }
 
     static insertIndicatorData(indicatorDataArray:Array<MongoIndicatorData>):Promise<any>{

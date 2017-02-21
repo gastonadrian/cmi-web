@@ -6,6 +6,14 @@ import 'rxjs/add/operator/map';
 import { Indicator } from './../models/indicator';
 import { DateValue, Performance } from './../models/shared';
 
+// Backend imports
+import { IndicatorApiResult } from './../../../../api/models/api/indicator';
+import { 
+  Operations,
+  PerformanceComparisons
+     } from './../../../../api/models/shared';
+
+
 @Injectable()
 export class IndicatorService { 
 
@@ -18,6 +26,18 @@ export class IndicatorService {
             .map(this.mapIndicator);
     }
 
+    save(indicator:IndicatorApiResult): Observable<Response>{
+        return this.http
+            .post(`/api/indicators`, indicator ,{ headers: this.getHeaders()})
+            .catch(this.handleError);
+    }
+
+
+    handleError(error: Response) {
+        console.log(error);
+        return Observable.throw(error.json().error || 'Server error');
+    }
+    
     private getHeaders(){
         let headers = new Headers();
         headers.append('Accept', 'application/json');

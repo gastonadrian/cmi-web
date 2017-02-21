@@ -1,12 +1,13 @@
 import * as utils from './../utils';
 import * as _ from 'lodash';
+import * as moment from 'moment';
 
 import { IndicatorDataService } from './../data/indicator.entity';
 
-import { IPerformance, Operations, SemaphoreStatus  } from './../models/shared';
+import { IPerformance, Operations, SemaphoreStatus, PerformanceComparisons  } from './../models/shared';
 
 import { MongoGoalIndicator } from './../models/mongo/goal-indicator';
-import { MongoIndicator } from './../models/mongo/indicator';
+import { MongoIndicator } from './../models/mongo/indicator.mongo';
 import { MongoIndicatorData } from './../models/mongo/indicator-data';
 
 import { IndicatorApiResult } from './../models/api/indicator';
@@ -46,17 +47,40 @@ export class IndicatorService{
                 //calculate performance for each indicator
                 for(var i = 0; i < indicators.length; i++){
                     let performance:IPerformance = self.calculateIndicatorPerformance(indicators[i], _.filter(indicatorsData, _.matches({ indicatorId: indicators[i]._id.toString() })) );
-                    indicatorsResult.push(new IndicatorApiResult(
-                        indicators[i]._id.toString(),
-                        indicators[i].customerId,
-                        indicators[i].goalIds,
-                        indicators[i].title,
-                        performance
-                    ));
+                    
+                    indicatorsResult.push(_.extend(indicators[i], 
+                        { performance: performance, id:indicators[i]._id.toString()  }) as IndicatorApiResult);
                 }
                 return indicatorsResult;    
             });
         });
+    }
+
+    static createIndicator(customerId:string, indicator:IndicatorApiResult):Promise<any>{
+        indicator.customerId = customerId;
+        if(!(indicator.title.length 
+            && indicator.data && indicator.data.title.length 
+            && (indicator.performanceComparison ===  PerformanceComparisons.lessThan || indicator.performanceComparison ===  PerformanceComparisons.equals)
+            && indicator.datasource && ( indicator.datasource.columnOperation === Operations.plus || indicator.datasource.columnOperation === Operations.average ) )){;
+            return new Promise(function(resolve, reject){
+                return reject('Faltan datos');
+            });
+        }
+
+        return IndicatorDataService.insertIndicator(indicator as MongoIndicator);
+    }
+
+    static createIndicatorData(customerId:string, indicatorData:MongoIndicatorData):Promise<any>{
+        indicatorData.customerId = customerId;
+        if(!(indicatorData.indicatorId
+        && indicatorData.value
+        && moment(indicatorData.date).isValid())){
+            return new Promise(function(resolve, reject){
+                return reject('Faltan datos');
+            });
+        }
+
+        return IndicatorDataService.insertIndicatorData([indicatorData] as Array<MongoIndicatorData>);
     }
 
     /**
@@ -70,8 +94,8 @@ export class IndicatorService{
     private static calculateIndicatorPerformance(indicator:MongoIndicator, indicatorData:Array<MongoIndicatorData>):IPerformance{
         let result:IPerformance;
 
-        if(indicator.performanceComparison === 'lessThan' 
-        && (indicator.data.operation === Operations.plus || indicator.data.operation === Operations.average) ){
+        if(indicator.performanceComparison === PerformanceComparisons.lessThan 
+        && (indicator.datasource.columnOperation === Operations.plus || indicator.datasource.columnOperation === Operations.average) ){
             result = this.calculateLessThanPerformance(indicator, indicatorData);
         }
 
@@ -117,7 +141,7 @@ export class IndicatorService{
             consolidateExpected += months[i].expected;   
         }
 
-        if(indicator.data.operation === Operations.average){
+        if(indicator.datasource.columnOperation === Operations.average){
             consolidateData = consolidateData / months.length;
             consolidateExpected = consolidateExpected / months.length;
         }

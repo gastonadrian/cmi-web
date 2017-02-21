@@ -1,7 +1,7 @@
 <section class="content-header">
     <h1 [innerHtml]="title"></h1>
 </section>
-<section class="content-header">
+<section class="content-header" *ngIf="showPeriods">
     <form class="form-inline">
     <div class="form-group">
         <label for="exampleInputName2">Periodo Visible</label>

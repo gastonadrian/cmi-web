@@ -5,4 +5,5 @@ function __export(m) {
 __export(require("./perspective.service"));
 __export(require("./goal.service"));
 __export(require("./indicator.service"));
+__export(require("./datasource.service"));
 //# sourceMappingURL=index.js.map

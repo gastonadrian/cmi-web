@@ -7,7 +7,7 @@ import { GoalDataService } from './../data/goal.entity';
 import { SemaphoreStatus, Operations, IPerformance } from './../models/shared';
 
 import { MongoGoal } from './../models/mongo/goal';
-import { MongoIndicator } from './../models/mongo/indicator';
+import { MongoIndicator } from './../models/mongo/indicator.mongo';
 import { MongoIndicatorData } from './../models/mongo/indicator-data';
 import { MongoGoalIndicator } from './../models/mongo/goal-indicator';
 
@@ -71,11 +71,10 @@ export class GoalService {
             value: 0
         };
         for(var i=0; i < indicators.length; i++){
-            var goalIndicator = indicatorFactors.find( (goalInd: MongoGoalIndicator, index: number) =>{ return goalInd.indicatorId == indicators[i]._id; }  );
+            var goalIndicator = indicatorFactors.find( (goalInd: MongoGoalIndicator, index: number) =>{ return goalInd.indicatorId == indicators[i].id }  );
             result.value += goalIndicator.factor * unitPercentage * indicators[i].performance.value;
         }
 
-        // so we are on the same scale for comparison (0 to 100)
         result.value = result.value;
         
         if(result.value <= goal.semaphore.yellowUntil){

@@ -4,4 +4,5 @@ function __export(m) {
 }
 __export(require("./indicator.entity"));
 __export(require("./goal.entity"));
+__export(require("./datasource.entity"));
 //# sourceMappingURL=index.js.map

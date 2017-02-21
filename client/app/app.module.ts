@@ -29,7 +29,8 @@ const appRoutes: Routes = [
     component: DashboardComponent,
     data:{
       title:'Cuadro de Mando Integral',
-      description:'Ve el estado de tus indicadores'
+      description:'Ve el estado de tus indicadores',
+      showPeriods:true
     },
     resolve:{
       perspectives: DashboardResolver
@@ -40,7 +41,8 @@ const appRoutes: Routes = [
     component: GoalComponent,
     data:{
       title:'Detalle de Objetivos',
-      description:''
+      description:'',
+      showPeriods:true
     },
     resolve:{
       goal: GoalResolver
@@ -60,7 +62,8 @@ const appRoutes: Routes = [
     component: IndicatorCreateComponent,
     data:{
       title:'Crear Indicador',
-      description:'Configuraci&oacute;n de Indicador'
+      description:'Configuraci&oacute;n de Indicador',
+      showPeriods:false      
     }
   },
   { 
@@ -68,7 +71,8 @@ const appRoutes: Routes = [
     component: SemaphoreComponent,
     data:{
       title:'Sem&aacute;foro',
-      description:'Configuraci&oacute;n de Semaforo'
+      description:'Configuraci&oacute;n de Semaforo',
+      showPeriods:false
     }
   },
   { 
@@ -84,7 +88,8 @@ const appRoutes: Routes = [
     component: PerspectiveComponent,
     data:{
       title:'Perspectivas',
-      description:'Configurar'
+      description:'Configurar',
+      showPeriods:false
     }
   },  
   { 
