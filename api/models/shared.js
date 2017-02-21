@@ -4,6 +4,9 @@ export var Operations;
 (function (Operations) {
     Operations[Operations["average"] = 1] = "average";
     Operations[Operations["plus"] = 2] = "plus";
+    Operations[Operations["count"] = 3] = "count";
+    Operations[Operations["countdistinct"] = 4] = "countdistinct";
+    Operations[Operations["query"] = 5] = "query";
 })(Operations || (Operations = {}));
 ;
 export var SemaphoreStatus;

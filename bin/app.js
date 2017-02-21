@@ -24,7 +24,7 @@ app.use(express.static('./client/bower_components'));
 app.use(express.static('./client/node_modules'));
 app.use(require('body-parser').json())
     .use(context)
-    .listen(3000);
+    .listen(8080);
 seneca
     .use(senecaWeb, senecaWebConfig)
     .use('./api/index')
