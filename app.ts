@@ -32,7 +32,7 @@ app.use(express.static('./client/node_modules'));
 
 app.use( require('body-parser').json() )
     .use( context )
-    .listen(80);
+    .listen(8080);
 
 seneca
     .use( senecaWeb, senecaWebConfig )
