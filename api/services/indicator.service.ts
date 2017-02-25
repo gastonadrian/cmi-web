@@ -135,6 +135,12 @@ export class IndicatorService{
             value:0
         };
         
+        if(!months.length){
+            performanceResult.semaphoreStatus = SemaphoreStatus.red;
+            performanceResult.value = 0;
+            return performanceResult;
+        }
+
         // get the consolidates
         for(var i = 0; i < months.length; i++){
             consolidateData += months[i].value;
@@ -148,8 +154,8 @@ export class IndicatorService{
 
         onePercentValue = consolidateExpected / (100 - indicator.semaphore.yellowUntil*100);
 
-        // calculate percent
         performanceResult.value = 1 - (consolidateData / onePercentValue)/100;
+
         if(performanceResult.value < 0){
             performanceResult.value = 0;
         }

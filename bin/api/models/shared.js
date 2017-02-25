@@ -76,5 +76,27 @@ BackendAppSettings.dataTypes = [
         type: SystemDataTypes.date
     }
 ];
+BackendAppSettings.columnOperations = [
+    {
+        title: 'sumar',
+        id: Operations.plus
+    },
+    {
+        title: 'promediar',
+        id: Operations.average
+    },
+    {
+        title: 'contar',
+        id: Operations.count
+    },
+    {
+        title: 'contar valores distintos',
+        id: Operations.countdistinct
+    },
+    {
+        title: 'consulta(query) personalizada [avanzado]',
+        id: Operations.query
+    }
+];
 exports.BackendAppSettings = BackendAppSettings;
 //# sourceMappingURL=shared.js.map

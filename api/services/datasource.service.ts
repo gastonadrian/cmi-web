@@ -16,4 +16,8 @@ export class DatasourceService {
 
         return DatasourceDataService.insertDatasource(datasource);
     }
+
+    static getDatasources(customerId:string):Promise<Array<MongoDatasource>>{
+        return DatasourceDataService.get(customerId);
+    }
 }

@@ -5,7 +5,7 @@ var routes={
         pin:    'role:api,path:*',
         map: {
             dashboard: { GET:true, suffix:'/:from?/:to?' },
-            datasources: { POST: true },
+            datasources: { POST: true, GET:true },
             indicators: { POST: true },
             indicatorsdata: {POST:true}
         }

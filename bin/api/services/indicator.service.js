@@ -109,6 +109,11 @@ var IndicatorService = (function () {
             semaphoreStatus: shared_1.SemaphoreStatus.green,
             value: 0
         };
+        if (!months.length) {
+            performanceResult.semaphoreStatus = shared_1.SemaphoreStatus.red;
+            performanceResult.value = 0;
+            return performanceResult;
+        }
         // get the consolidates
         for (var i = 0; i < months.length; i++) {
             consolidateData += months[i].value;
@@ -119,7 +124,6 @@ var IndicatorService = (function () {
             consolidateExpected = consolidateExpected / months.length;
         }
         onePercentValue = consolidateExpected / (100 - indicator.semaphore.yellowUntil * 100);
-        // calculate percent
         performanceResult.value = 1 - (consolidateData / onePercentValue) / 100;
         if (performanceResult.value < 0) {
             performanceResult.value = 0;

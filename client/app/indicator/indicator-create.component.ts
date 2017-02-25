@@ -1,3 +1,5 @@
+import * as _ from 'lodash';
+
 import { Component, Input, ElementRef, AfterViewInit, ViewChild, OnInit } from '@angular/core';
 import { FormsModule }   from '@angular/forms';
 import { Router, ActivatedRoute, Params } from '@angular/router';
@@ -8,7 +10,8 @@ import {
   BackendAppSettings,
   Operations,
   IDataDefinition,
-  PerformanceComparisons
+  PerformanceComparisons,
+  IColumnOperationOption
      } from './../../../api/models/shared';
 import { IndicatorApiResult } from './../../../api/models/api/indicator';
 
@@ -24,6 +27,8 @@ export class IndicatorCreateComponent implements OnInit, AfterViewInit{
   public indicator: IndicatorApiResult;
 
   public dataTypes:Array<IDataDefinition> = BackendAppSettings.dataTypes;
+
+  public columnOperations:Array<IColumnOperationOption> = BackendAppSettings.columnOperations;
   public submitted: Boolean = false;
 
   public operation:number;
@@ -33,7 +38,7 @@ export class IndicatorCreateComponent implements OnInit, AfterViewInit{
     private route: ActivatedRoute,
     private router: Router,
     public indicatorService: IndicatorService) {
-}
+  }
   
   ngAfterViewInit() {
       this.htmlElement = this.element.nativeElement;
@@ -49,17 +54,20 @@ export class IndicatorCreateComponent implements OnInit, AfterViewInit{
   }
   
   onSubmit() { 
-    this.submitted = true; 
-    this.indicator.datasource = {
+    let emptyDataSource = {
       _id:'',
       table:'',
-      columnOperation: +(this.operation as number),
       rowOperation:'',
       dateColumn:'',
       valueColumn:''
     };
+
+    // create empty datasource, we avoid to overwrite already defined values
+    // suitable for indicator edition
+    _.extend(this.indicator.datasource, emptyDataSource);
+
+    this.submitted = true; 
     this.indicator.performanceComparison = +(this.comparison as number);
-    console.log(this.indicator);
 
     return this.indicatorService.save(this.indicator)
       

@@ -9,6 +9,9 @@ var DatasourceService = (function () {
         }
         return datasource_entity_1.DatasourceDataService.insertDatasource(datasource);
     };
+    DatasourceService.getDatasources = function (customerId) {
+        return datasource_entity_1.DatasourceDataService.get(customerId);
+    };
     return DatasourceService;
 }());
 exports.DatasourceService = DatasourceService;

@@ -28,6 +28,14 @@ export interface IDataDefinition{
     type:SystemDataTypes;
 }
 
+export interface IDataSource{
+    _id: string,
+    table:string,
+    valueColumn: string,
+    dateColumn: string,
+    columnOperation:Operations;
+    rowOperation?: string
+}
 
 export enum UserDataTypes{
     number=1,
@@ -81,17 +89,39 @@ export class BackendAppSettings{
             type:SystemDataTypes.date
         }                                
     ];
+
+    static columnOperations: Array<IColumnOperationOption> = [ 
+        {
+            title:'sumar',
+            id: Operations.plus
+        },
+        {
+            title:'promediar',
+            id: Operations.average
+        },
+        {
+            title:'contar',
+            id: Operations.count
+        },
+        {
+            title:'contar valores distintos',
+            id: Operations.countdistinct
+        },
+        {
+            title:'consulta(query) personalizada [avanzado]',
+            id: Operations.query
+        }
+    ];
+
+
     static getDataDefinition(dataType:UserDataTypes){
         let index:number = (dataType as number) - 1;
         return this.dataTypes[index];
     }
 }
 
-export interface IDataSource{
-    _id: string,
-    table:string,
-    valueColumn: string,
-    dateColumn: string,
-    columnOperation:Operations;
-    rowOperation?: string
+// only used for static analysis
+export interface IColumnOperationOption{
+    id: Operations,
+    title:string
 }

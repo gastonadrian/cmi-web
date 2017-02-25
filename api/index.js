@@ -6,9 +6,17 @@ module.exports = function api(options) {
         this.act('role:dashboard,cmd:index', msg, respond);
     });
 
+
     this.add('role:api,path:datasources', function (msg, respond) {
-        this.act('role:datasources,cmd:save', msg, respond);
+
+        if(msg.request$.method === 'GET'){
+            this.act('role:datasources,cmd:get', msg, respond);
+        }
+        else{
+            this.act('role:datasources,cmd:save', msg, respond);
+        }
     });
+
 
     this.add('role:api,path:indicators', function (msg, respond) {
         this.act('role:indicators,cmd:save', msg, respond);
