@@ -8,6 +8,7 @@ var PerspectiveService = (function () {
     function PerspectiveService() {
     }
     PerspectiveService.getDashboard = function (customerId, from, to) {
+        console.log('entering perspective service');
         var period = utils.getPeriodFromParams(from, to);
         // desired result
         return this.getPerspectivesWithPerformance(customerId, true, period.from, period.to)

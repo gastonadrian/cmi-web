@@ -3,6 +3,7 @@ module.exports = function api(options) {
     var routes = require('./routes');
 
     this.add('role:api,path:dashboard', function (msg, respond) {
+        console.warn('entering index js');
         this.act('role:dashboard,cmd:index', msg, respond);
     });
 
