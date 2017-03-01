@@ -136,7 +136,7 @@ app.use(passport.session());
 app.use( require('body-parser').json() )
     .use( require('body-parser').urlencoded({ extended: true }) )
     .use( context )
-    .listen(8080);
+    .listen(process.env.PORT || 8080);
 
 app.get('/', 
     require('connect-ensure-login').ensureLoggedIn(),
