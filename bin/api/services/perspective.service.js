@@ -25,6 +25,7 @@ var PerspectiveService = (function () {
             perspective_entity_1.PerspectiveDataService.getPerspectives(customerId),
             goal_service_1.GoalService.getByCustomerId(customerId)
         ]).then(function onBothPromisesResult(values) {
+            console.warn('perspectives', values[0])
             var perspectives = values[0];
             var goals = values[1];
             var result = [];

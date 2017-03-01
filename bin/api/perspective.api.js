@@ -11,6 +11,7 @@ module.exports = function perspectiveApi() {
         });
     }
     function getAll(msg, respond) {
+        console.warn('entering perspective api');
         perspectiveService.getAll(msg.args.params.customerId)
             .then(function onGetAll(result) {
             respond(null, result);
