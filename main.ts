@@ -19,6 +19,7 @@ import datasource = require('./api/datasource.api');
 import customer = require('./api/customer.api');
 import goal = require('./api/goal.api');
 import apiIndex = require('./api/index');
+import path = require('path');
 
 // load environment strategy
 dotenv.load();
@@ -40,9 +41,11 @@ let senecaWebConfig:any = {
 app.set('view engine', 'pug');
 app.set('views', './client/app');
 
-app.use(express.static(__dirname + '/client/dist'));
-app.use(express.static(__dirname + 'client/bower_components'));
-app.use(express.static(__dirname + '/client/node_modules'));
+console.log( path.join(__dirname + '/../client/dist'));
+
+app.use(express.static( path.join(__dirname + '/../client/dist')));
+app.use(express.static(path.join(__dirname + '/../client/bower_components')));
+app.use(express.static(path.join(__dirname + '/../client/node_modules')));
 
 app.use(cookieParser());
 app.use(session({secret: 'magically', resave: false, saveUninitialized: false}));

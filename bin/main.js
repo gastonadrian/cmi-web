@@ -12,6 +12,7 @@ var dotenv = require("dotenv");
 var passport = require('passport');
 var strategy = require('passport-local').Strategy;
 var cookieParser = require('cookie-parser');
+var path = require("path");
 // load environment strategy
 dotenv.load();
 var router = express.Router;
@@ -29,9 +30,10 @@ var senecaWebConfig = {
 // specify the views directory
 app.set('view engine', 'pug');
 app.set('views', './client/app');
-app.use(express.static(__dirname + '/client/dist'));
-app.use(express.static(__dirname + 'client/bower_components'));
-app.use(express.static(__dirname + '/client/node_modules'));
+console.log(path.join(__dirname + '/../client/dist'));
+app.use(express.static(path.join(__dirname + '/../client/dist')));
+app.use(express.static(path.join(__dirname + '/../client/bower_components')));
+app.use(express.static(path.join(__dirname + '/../client/node_modules')));
 app.use(cookieParser());
 app.use(session({ secret: 'magically', resave: false, saveUninitialized: false }));
 seneca
