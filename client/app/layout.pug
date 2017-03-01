@@ -135,7 +135,7 @@ html
               </a>
               <ul class="treeview-menu">
                 <li><a href="/goals/create">Crear</a></li>
-                <li><a href="#">Ver listado</a></li>
+                <li><a href="/goals/list">Listado</a></li>
               </ul>
             </li>
             <li class="treeview">
@@ -145,13 +145,25 @@ html
                 </span>
               </a>
               <ul class="treeview-menu">
-                <li><a href="/indicators/create">Crear indicador</a></li>
-                <li><a href="#">Ver listado</a></li>
+                <li><a href="/indicators/create">Crear</a></li>
+                <li><a href="/indicators/list">Listado</a></li>
               </ul>
             </li>
             <li><a href="/perspectives"><i class="fa fa-tasks"></i> <span>Perspectivas</span></a></li>
             <li><a href="/configs"><i class="fa fa-sliders"></i> <span>Configuraciones</span></a></li>
-            <li><a href="/profile"><i class="fa fa-user"></i> <span>Perfil</span></a></li>            
+
+            if admin
+              li.treeview
+                a(href="#")
+                  i.fa.fa-user
+                  span Usuarios
+                ul.treeview-menu
+                  li
+                    a(href="/users/create") Crear
+                  li
+                    a(href="/users/list") Listado
+
+            <li><a href="/profile"><i class="fa fa-vcard"></i> <span>Perfil</span></a></li>            
           </ul>
           <!-- /.sidebar-menu -->
         </section>

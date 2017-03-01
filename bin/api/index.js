@@ -1,7 +1,7 @@
 module.exports = function api(options) {
     var routes = require('./routes');
     this.add('role:api,path:dashboard', function (msg, respond) {
-        console.warn('entering index js');
+        // console.warn('entering index js');
         this.act('role:dashboard,cmd:index', msg, respond);
     });
     this.add('role:api,path:perspectives', function (msg, respond) {
@@ -57,7 +57,12 @@ module.exports = function api(options) {
         this.act('role:goals,cmd:delete', msg, respond);
     });
     this.add('role:api,path:customers', function (msg, respond) {
-        this.act('role:customers,cmd:save', msg, respond);
+        if (msg.request$.method === 'GET') {
+            this.act('role:customers,cmd:getall', msg, respond);
+        }
+        else {
+            this.act('role:customers,cmd:save', msg, respond);
+        }
     });
     this.add('role:api,path:login', function (msg, respond) {
         var pin = {

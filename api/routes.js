@@ -101,7 +101,8 @@ var routes={
                     fail: '/login'
                 }                
             },
-            customers:{ 
+            customers:{
+                GET:true,
                 POST:true,
                 secure: {
                     fail: '/login'

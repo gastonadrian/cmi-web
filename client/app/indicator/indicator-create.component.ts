@@ -100,7 +100,7 @@ export class IndicatorCreateComponent implements OnInit, AfterViewInit{
             console.log('error', error);
         },
         () =>{
-            this.router.navigateByUrl('/dashboard');
+            this.router.navigateByUrl('/indicators/list');
         }
       );
   }

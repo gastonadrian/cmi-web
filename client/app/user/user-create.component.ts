@@ -43,22 +43,19 @@ export class UserCreateComponent implements OnInit, AfterViewInit{
      });
   }
   
-  onSubmit(callback?:Function) { 
+  onSubmit() { 
 
     this.submitted = true; 
     return this.userService.save(this.user)
       
       .subscribe(
         (indicatorId:any) => { 
-          if(callback){
-            callback(indicatorId);
-          }          
+            this.router.navigateByUrl('/users/list');
         },
         (error:any) => {
             console.log('error', error);
         },
         () =>{
-            this.router.navigateByUrl('/dashboard');
         }
       );
   }

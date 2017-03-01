@@ -20,6 +20,8 @@ import { SemaphoreComponent } from './semaphore/semaphore.component';
 import { GoalCreateComponent } from './goal/goal-create.component';
 import { PerspectiveComponent } from './perspective/perspective.component';
 import { UserCreateComponent } from './user/user-create.component';
+import { IndicatorListComponent } from './indicator/indicator-list.component';
+import { UserListComponent } from './user/user-list.component';
 
 import { GoalResolver } from './shared/services/goal-route-resolver';
 import { IndicatorGridResolver } from './shared/services/indicator-grid-route-resolver';
@@ -27,6 +29,7 @@ import { DashboardResolver } from './shared/services/dashboard-route-resolver';
 import { PerspectiveResolver } from './shared/services/perspective-resolver';
 import { IndicatorResolver } from './shared/services/indicator-resolver';
 import { IndicatorEditResolver } from './shared/services/indicator-edit-resolver';
+import { UserListResolver } from './shared/services/user-list-resolver';
 
 const appRoutes: Routes = [
   { 
@@ -84,6 +87,18 @@ const appRoutes: Routes = [
     }
   },  
   { 
+    path: 'indicators/list', 
+    component: IndicatorListComponent,
+    data:{
+      title:'Indicadores',
+      description:'',
+      showPeriods:false      
+    },
+    resolve:{
+      indicators: IndicatorResolver
+    }
+  },    
+  { 
     path: 'semaphore/configure', 
     component: SemaphoreComponent,
     data:{
@@ -124,7 +139,20 @@ const appRoutes: Routes = [
       showPeriods:false,
       onlyAdmin:true
     }
-  },  
+  }, 
+  { 
+    path: 'users/list', 
+    component: UserListComponent,
+    canActivate: [AuthGuard],    
+    data:{
+      title:'Usuarios',
+      description:'',
+      showPeriods:false      
+    },
+    resolve:{
+      users: UserListResolver
+    }
+  },      
   { 
     path: '',
     redirectTo: '/dashboard',
@@ -145,7 +173,9 @@ const appRoutes: Routes = [
     PerspectiveComponent,
     GaugeChartComponent,
     DashboardPerspectiveComponent,
-    UserCreateComponent
+    UserCreateComponent,
+    IndicatorListComponent,
+    UserListComponent
   ],
   imports: [
     BrowserModule,
@@ -168,7 +198,8 @@ const appRoutes: Routes = [
     AuthGuard,
     PerspectiveResolver,
     IndicatorResolver,
-    IndicatorEditResolver
+    IndicatorEditResolver,
+    UserListResolver
   ],
   bootstrap: [AppComponent]
 })
