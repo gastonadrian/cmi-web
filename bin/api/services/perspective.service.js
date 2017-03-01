@@ -21,7 +21,9 @@ var PerspectiveService = (function () {
         });
     };
     PerspectiveService.getAll = function (customerId, withGoals) {
-        console.log('_ existe!', _);
+
+
+        console.warn(_.matchesProperty, 'matches');
 
         return Promise.all([
             perspective_entity_1.PerspectiveDataService.getPerspectives(customerId),
