@@ -1,14 +1,17 @@
 "use strict";
-var GoalApiResult = (function () {
-    function GoalApiResult(_id, customerId, title, perspectiveId, performance) {
-        this._id = _id;
-        this.customerId = customerId;
-        this.title = title;
-        this.perspectiveId = perspectiveId;
-        this.performance = performance;
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var goal_base_1 = require("./../goal.base");
+var GoalApiResult = (function (_super) {
+    __extends(GoalApiResult, _super);
+    function GoalApiResult() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
     return GoalApiResult;
-}());
+}(goal_base_1.GoalBase));
 exports.GoalApiResult = GoalApiResult;
 ;
 //# sourceMappingURL=goal.js.map

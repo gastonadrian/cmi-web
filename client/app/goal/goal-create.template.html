@@ -1,20 +1,32 @@
 <div class="row">
     <div class="col-xs-12 col-sm-10">
         <div class="box box-primary">
-            <form>
+            <h2>{{errorMessage}}</h2>
+            <form name="goalForm" (ngSubmit)="onSubmit()" #goalForm="ngForm">
                 <div #container class="box-body">
-                    <div class="form-group">
-                        <label for="" class="control-label">Nombre</label>
-                        <input type="text" class="form-control" value="Satisfacción del cliente">
+                    <div class="form-group" [ngClass]="{ 'has-error': !title.valid && !title.pristine }">
+                        <label for="title" class="control-label">Nombre</label>
+                        <input type="text" [(ngModel)]="goal.title" class="form-control" name="title" required #title="ngModel">
+                        <p class="help-block" [hidden]="title.valid || title.pristine">Este campo es requerido.</p>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" [ngClass]="{ 'has-error': !perspective.valid && !perspective.pristine }">
                         <label for="" class="control-label">Perspectiva</label>
-                        <select name="" id="" class="form-control">
-                            <option value="">Financiera</option>
-                            <option value="" selected="selected">Clientes</option>
-                            <option value="">Procesos</option>
-                            <option value="">Aprendizaje</option>
+                        <select name="perspective" [(ngModel)]="goal.perspectiveId"  class="form-control" required #perspective="ngModel">
+                            <option *ngFor="let perspective of perspectives" [ngValue]="perspective._id">{{perspective.title}}</option>
                         </select>
+                        <p class="help-block" [hidden]="perspective.valid || perspective.pristine">Este campo es requerido.</p>
+                    </div>
+                    <h3>Sem&aacute;foro</h3> 
+                    <h4>Necesitamos nos indique como configurar el sem&aacute;foro para el indicador (por defecto utilizamos los valores que configuro en sem&aacute;foro global)</h4>
+                    <div class="form-group" [ngClass]="{ 'has-error': !redUntil.valid && !redUntil.pristine }">
+                        <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en rojo desde 0% hasta </label>
+                        <input type="number" [(ngModel)]="goal.semaphore.redUntil" class="form-control" name="redUntil" required #redUntil="ngModel">
+                        <p class="help-block" [hidden]="redUntil.valid || redUntil.pristine">Este campo es requerido.</p>
+                    </div>
+                    <div class="form-group" [ngClass]="{ 'has-error': !yellowUntil.valid && !yellowUntil.pristine }">
+                        <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en amarillo desde {{redUntil.value}}% hasta</label>
+                        <input type="number" [(ngModel)]="goal.semaphore.yellowUntil" class="form-control" name="yellowUntil" required #yellowUntil="ngModel">
+                        <p class="help-block" [hidden]="yellowUntil.valid || yellowUntil.pristine">Este campo es requerido.</p>
                     </div>
                     <h3>Indicadores del objetivo</h3>
                     <table #goalIndicatorsTable class="table table-bordered table-hover">
@@ -27,13 +39,14 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>cantidad de descuentos presentados</td>
-                                <td>valor</td>
-                                <td>suma</td>
+                            <tr *ngFor="let indicator of goal.indicators;">
+                                <td>{{indicator.title}}</td>
+                                <td>{{indicator.data.title}}</td>
+                                <td>{{indicator.columnOperationTitle}}</td>
                                 <td>
-                                    <button type="button" class="btn btn-default"><i class="fa fa-pencil text-yellow"></i> Editar</button>
-                                    <button type="button" class="btn btn-default"><i class="fa fa-trash-o text-red"></i> Eliminar</button>
+                                    <a href="/indicators/edit/{{indicator._id}}" class="btn btn-default"><i class="fa fa-pencil text-yellow"></i> Editar</a>
+                                    <button type="button" class="btn btn-default" (click)="assignIndicator(indicator)"><i class="fa fa-pencil text-green"></i> Editar Asociaci&oacute;n</button>
+                                    <button type="button" class="btn btn-default" (click)="removeFromGoal(indicator)"><i class="fa fa-trash-o text-red"></i> Desasignar</button>
                                 </td>
                             </tr>                            
                         </tbody>
@@ -49,82 +62,38 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>% Ingresos por pedidos</td>
-                                <td>%</td>
-                                <td>promedio</td>
+                            <tr *ngFor="let indicator of indicators;">
+                                <td>{{indicator.title}}</td>
+                                <td>{{indicator.data.title}}</td>
+                                <td>{{indicator.columnOperationTitle}}</td>
                                 <td>
-                                    <button type="button" class="btn btn-default"><i class="fa fa-plus text-green"></i> Asociar</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>calidad del servicio</td>
-                                <td>valor</td>
-                                <td>promedio</td>
-                                <td>
-                                    <button type="button" class="btn btn-default"><i class="fa fa-plus text-green"></i> Asociar</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Producción por empleado</td>
-                                <td>valor</td>
-                                <td>promedio</td>
-                                <td>
-                                    <button type="button" class="btn btn-default"><i class="fa fa-plus text-green"></i> Asociar</button>
-                                </td>
-                            </tr>
-                            <tr class="active">
-                                <td>tiempo de respuesta de quejas</td>
-                                <td>minutos</td>
-                                <td>promedio</td>
-                                <td>
-                                    <button type="button" class="btn btn-default"><i class="fa fa-plus text-green"></i> Asociar</button>
+                                    <button type="button" class="btn btn-default" (click)="assignIndicator(indicator)"><i class="fa fa-plus text-green"></i> Asociar</button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
 
-                    <h3>Configurar Indicador: <strong>tiempo de respuesta de quejas</strong></h3>
-                    <div class="form form-horizontal">
+                    <h3 *ngIf="!!indicator._id">Configurar Indicador: <strong>{{indicator.title}}</strong></h3>
+                    <div *ngIf="!!indicator._id" class="form form-horizontal">
                         <div class="form-group">                          
                             <label for="" class="col-xs-12 col-sm-4 control-label">Valor esperado para el trimestre actual</label>
                             <div class="col-sm-6 col-xs-10 input-group">
-                                <input type="text" class="form-control" value="10">
-                                <span class="input-group-addon">minutos</span>
+                                <input type="number" class="form-control" [(ngModel)]="quarterExpected" [ngModelOptions]="{standalone: true}" required >
+                                <span class="input-group-addon">{{indicator.data.title}}</span>
                             </div>
                         </div>
                         <div class="form-group">
                             <label for="" class="control-label col-xs-12 col-sm-4">Ponderaci&oacute;n dentro del objetivo</label>
                             <div class="col-xs-10 col-sm-6">
-                                <input type="text" class="form-control" value="1">
+                                <input type="number" [(ngModel)]="factor" [ngModelOptions]="{standalone: true}" required class="form-control">
                             </div>
                         </div>
-                        <h4>Necesitamos nos indique como configurar el semaforo para el indicador (por defecto utilizamos los valores que configuro en sem&aacute;foro global)</h4>
-                        <div class="form-group">
-                            <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en rojo desde 0% hasta </label>
-                            <div class="col-xs-10 col-sm-6">
-                                <input type="text" class="form-control" value="30%">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en amarillo desde 31% hasta </label>
-                            <div class="col-xs-10 col-sm-6">
-                                <input type="text" class="form-control" value="59%">
-                            </div>
-                        </div>
-
-                        <p><strong>Su configuracion:</strong></p>
-                        <ul>
-                            <li>Si el valor es menor a 10 minutos, el sem&aacute;foro sera verde</li>
-                            <li>Si el valor es mayor o igual a 10 minutos el sem&aacute;foro ser&aacute; amarillo o rojo (de acuerdo al m&aacute;ximo valor posible)</li>
-                        </ul>
-                            <button class="btn btn-success pull-right">Guardar Indicador</button>
+                        <button class="btn btn-success pull-right" type="button" (click)="saveGoalIndicator()">Guardar Indicador</button>
                     </div>
-
                 </div>
                 <div class="box-footer">
-                    <button type="submit" class="btn btn-default">Cancelar</button>
-                    <button type="submit" class="btn btn-primary pull-right">Guardar</button>
+                    <button type="button" class="btn btn-default">Cancelar</button>
+                    <button type="submit"  [disabled]="!goalForm.form.valid" class="btn btn-primary pull-right">Guardar</button>
                 </div>                
             </form>                    
         </div>

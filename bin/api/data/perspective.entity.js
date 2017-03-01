@@ -13,36 +13,41 @@ var PerspectiveDataService = (function () {
             }
         };
         return mongoControl.find(findParams);
-        // let perspectives:Array<MongoPerspective> = [
-        //     new MongoPerspective(
-        //         customerId,
-        //         'Perspectiva Financiera',
-        //         {
-        //            redUntil:30,
-        //            yellowUntil:59
-        //         }),
-        //     new MongoPerspective(
-        //         customerId,
-        //         'Perspectiva Clientes',
-        //         {
-        //            redUntil:30,
-        //            yellowUntil:59
-        //         }),
-        //     new MongoPerspective(
-        //         customerId,
-        //         'Perspectiva de Aprendizaje',
-        //         {
-        //            redUntil:30,
-        //            yellowUntil:59
-        //         }),
-        //     new MongoPerspective(
-        //         customerId,
-        //         'Perspectiva de Procesos',
-        //         {
-        //            redUntil:30,
-        //            yellowUntil:59
-        //         })
-        //     ];
+    };
+    PerspectiveDataService.createBasePerspectives = function (customerId) {
+        var clientes = {
+            "customerId": customerId,
+            "title": "Perspectiva Clientes",
+            "semaphore": {
+                "redUntil": 30,
+                "yellowUntil": 59
+            }
+        };
+        var aprendizaje = {
+            "customerId": customerId,
+            "title": "Perspectiva de Aprendizaje",
+            "semaphore": {
+                "redUntil": 30,
+                "yellowUntil": 59
+            }
+        };
+        var procesos = {
+            "customerId": customerId,
+            "title": "Perspectiva de Procesos",
+            "semaphore": {
+                "redUntil": 30,
+                "yellowUntil": 59
+            }
+        };
+        var financiera = {
+            "customerId": customerId,
+            "title": "Perspectiva Financiera",
+            "semaphore": {
+                "redUntil": 30,
+                "yellowUntil": 59
+            }
+        };
+        return this.insertPerspectives([clientes, aprendizaje, procesos, financiera]);
     };
     PerspectiveDataService.insertPerspectives = function (perspectives) {
         var params = {
@@ -51,6 +56,16 @@ var PerspectiveDataService = (function () {
             data: perspectives
         };
         return mongoControl.insert(params);
+    };
+    PerspectiveDataService.update = function (perspective) {
+        var params = {
+            db: utils.getConnString(),
+            collection: 'perspectives',
+            id: perspective._id
+        };
+        delete perspective._id;
+        params.update = perspective;
+        return mongoControl.updateById(params);
     };
     return PerspectiveDataService;
 }());

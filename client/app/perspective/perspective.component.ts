@@ -1,6 +1,11 @@
 import { Component, Input, ElementRef, AfterViewInit, ViewChild, OnInit } from '@angular/core';import { Router, ActivatedRoute, Params } from '@angular/router';
+
 import { PerspectiveService } from './../shared/services/';
-import { Perspective } from './../shared/models/perspective';
+import { GoalService } from './../shared/services';
+
+import { PerspectiveApiResult } from './../../../api/models/api/perspective';
+import { GoalApiResult } from './../../../api/models/api/goal';
+
 
 @Component({
   moduleId: module.id,
@@ -10,48 +15,84 @@ import { Perspective } from './../shared/models/perspective';
 export class PerspectiveComponent implements OnInit, AfterViewInit{
   @ViewChild('container') element: ElementRef;
   private htmlElement: HTMLElement;
-  public perspectives: Array<any> = new Array<any>();
-  private newGoal:any = {
-    title:'',
-    status:3
-  };
+  public perspectives: Array<PerspectiveApiResult> = [];
+  public newGoals:Array<string> = [];
 
   constructor( 
     private route: ActivatedRoute,
     private router: Router,
-    public perspectiveService: PerspectiveService) { 
+    public perspectiveService: PerspectiveService,
+    public goalService: GoalService) { 
+    
   }
   
   ngAfterViewInit() {
       this.htmlElement = this.element.nativeElement;
   }
 
-  private getRandomInt(min:number, max:number):number {
-    return Math.floor(Math.random() * (max - min)) + min;
+  addGoal(perspectiveIndex: number){
+    let goalTitle:string = this.newGoals[perspectiveIndex];
+    if(!goalTitle || !goalTitle.length){
+      return;
+    }
+
+    let goal:GoalApiResult = new GoalApiResult();
+    goal.title = goalTitle;
+    goal.perspectiveId = this.perspectives[perspectiveIndex]._id;
+    // save
+    this.goalService.save(goal)
+      .subscribe(
+        (goalId:any) => { 
+          goal._id = goalId;
+          this.perspectives[perspectiveIndex].goals.unshift(goal);
+        },
+        (error:any) => {
+            console.log('error', error);
+        }
+      );
+  }
+  deleteGoal(goal:GoalApiResult, perspectiveIndex:number, goalIndex:number){
+    if(!goal._id){
+      return;
+    }
+
+    this.goalService.delete(goal)
+      .subscribe(
+      (ok:any) => { 
+          if(ok){
+            this.perspectives[perspectiveIndex].goals.splice(goalIndex,1);
+          }
+        },
+        (error:any) => {
+            console.log('error', error);
+        }
+      );
   }
 
   ngOnInit(){
     this.perspectiveService.get()
-      .subscribe((data:Array<Perspective>) => {        
+      .subscribe((data:Array<PerspectiveApiResult>) => {        
         for(var i=0; i < data.length; i++){
-
-          var goals:any = [];
-          for(var j=0; j < data[i].goals.length; j++){
-             goals.push({
-                id: data[i].goals[j].id,
-                title:data[i].goals[j].title,
-                status: this.getRandomInt(1,3)
-             });
-          }
-          goals.push(this.newGoal);
-
-          this.perspectives.push({
-            id: data[i].id,
-            title: data[i].title,
-            goals: goals
-          });
+          let tmpGoal:GoalApiResult = new GoalApiResult();
+          tmpGoal.perspectiveId = data[i]._id;
+          data[i].goals.push(tmpGoal);
         }
-
+        this.perspectives = data;
      });
+  }
+
+
+  save():void{
+    this.perspectiveService.save(this.perspectives)
+        .subscribe(
+      (ok:any) => { 
+          if(ok){
+            this.router.navigateByUrl('/dashboard');
+          }
+        },
+        (error:any) => {
+            console.log('error', error);
+        }
+      );
   }
 }

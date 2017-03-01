@@ -6,23 +6,105 @@ import { GoalDataService } from './../data/goal.entity';
 
 import { SemaphoreStatus, Operations, IPerformance } from './../models/shared';
 
-import { MongoGoal } from './../models/mongo/goal';
+import { MongoGoal } from './../models/mongo/goal.mongo';
 import { MongoIndicator } from './../models/mongo/indicator.mongo';
 import { MongoIndicatorData } from './../models/mongo/indicator-data';
-import { MongoGoalIndicator } from './../models/mongo/goal-indicator';
+import { MongoGoalIndicator } from './../models/mongo/goal-indicator.mongo';
+
 
 import { IndicatorApiResult } from './../models/api/indicator';
 import { GoalApiResult } from './../models/api/goal';
+import { GoalIndicatorApiResult } from './../models/api/goal-indicator';
 
 export class GoalService {
     
     constructor(){
     }
+    static get(customerId:string, goalId:string):Promise<any>{
+
+        return Promise.all([
+            GoalDataService.get(goalId),
+            IndicatorService.getIndicatorsByGoalId(customerId, [goalId])
+        ]).then(function onGetAll(values:Array<any>){
+            let goal:MongoGoal = values[0];
+            
+            if(!goal){
+                return { ok: false };
+            }
+
+            return _.extend(goal, {
+                indicators: values[1] as Array<IndicatorApiResult>
+            }) as GoalApiResult; 
+        });
+    }
+
+    static getByCustomerId(customerId:string):Promise<Array<GoalApiResult>>{
+        return GoalDataService.getByCustomerId(customerId);
+    }
+
+    static save(customerId:string, goal:GoalApiResult):Promise<any>{
+        goal.customerId = customerId;
+        goal.active = false;
+
+        if(!goal.title.length || !goal.perspectiveId) {
+            return new Promise(function(resolve, reject){
+                return reject('Faltan datos');
+            });
+        }
+
+        // a goal is active if at least has one active indicator
+        if(goal.indicators  && goal.indicators.length){
+            goal.active = !!_.filter(goal.indicators, _.matchesProperty('active', true)).length;
+        }
+
+        return GoalDataService.insertGoal(goal);
+    }
+    
+    static update(customerId:string, goal:GoalApiResult):Promise<any>{
+        if(!goal.title.length || !goal.perspectiveId) {
+            return new Promise(function(resolve, reject){
+                return reject('Faltan datos');
+            });
+        }
+
+        // a goal is active if at least has one active indicator
+        if(goal.indicators  && goal.indicators.length){
+            goal.active = !!_.filter(goal.indicators, _.matchesProperty('active', true)).length;
+        }
+
+        return GoalDataService.update(goal);
+    }
+
+    static delete(customerId:string, goalId:string):Promise<any>{
+        return Promise.all([
+            GoalDataService.deleteGoal(customerId,goalId),
+            IndicatorService.getIndicatorsByGoalId(customerId, [goalId])
+        ]).then(function onAll(values:Array<any>){
+            let removeGoalResult:any = values[0];
+            let indicators:Array<MongoIndicator> = values[1];
+            let promiseArray:Array<Promise<any>> = [];
+
+            for(var i=0; i < indicators.length; i++){
+                _.remove(indicators[i].goalIds, (value:string) => { value === goalId });
+                promiseArray.push(IndicatorService.update(indicators[i]));
+            }
+
+            return Promise.all(promiseArray)
+                .then(function onAllUpdates(updates){
+                    
+                    for(var j=0; j< updates.length; j++){
+                        removeGoalResult.ok = removeGoalResult.ok &&  updates[j].ok;
+                    }
+
+                    return removeGoalResult;
+                });
+        });
+    }
 
     static getGoalsPerformance(customerId:string, withIndicators:Boolean, from:Date, to:Date):Promise<Array<GoalApiResult>>{
         let self = this;
 
-        return GoalDataService.getGoals(customerId, true)
+        return GoalDataService.getByCustomerId(customerId, true)
         .then(function onGetGoals(mongoGoals:Array<MongoGoal>){
             let indicators:Array<IndicatorApiResult>,
                 goalIds:Array<string> = [],
@@ -50,14 +132,14 @@ export class GoalService {
                         return _.includes(ind.goalIds, mongoGoals[i]._id.toString())
                     });
         
-                    let performance:IPerformance = self.calculateGoalPerformance(mongoGoals[i], indicatorsWithPerformance, indicatorSpecs);
-                    result.push(new GoalApiResult(
-                        mongoGoals[i]._id.toString(),
-                        mongoGoals[i].customerId,
-                        mongoGoals[i].title,
-                        mongoGoals[i].perspectiveId,
-                        performance
-                    ));
+                    let performance:IPerformance = self.calculateGoalPerformance(mongoGoals[i], indicatorsWithPerformance, indicatorSpecs);                    
+                    result.push(                    
+                        _.extend(mongoGoals[i], { 
+                            id: mongoGoals[i]._id.toString(),
+                            performance: performance,
+                            indicators: []
+                        }) as GoalApiResult
+                    );
                 }
                 return result;
             });
@@ -71,7 +153,7 @@ export class GoalService {
             value: 0
         };
         for(var i=0; i < indicators.length; i++){
-            var goalIndicator = indicatorFactors.find( (goalInd: MongoGoalIndicator, index: number) =>{ return goalInd.indicatorId == indicators[i].id }  );
+            var goalIndicator = indicatorFactors.find( (goalInd: MongoGoalIndicator, index: number) =>{ return goalInd.indicatorId == indicators[i]._id }  );
             result.value += goalIndicator.factor * unitPercentage * indicators[i].performance.value;
         }
 

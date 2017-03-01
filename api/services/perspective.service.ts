@@ -3,7 +3,9 @@ import * as _ from 'lodash';
 import { GoalService } from './goal.service';
 import { PerspectiveDataService } from './../data/perspective.entity';
 import { IPerformance, SemaphoreStatus } from './../models/shared';
-import { MongoPerspective } from './../models/mongo/perspective';
+import { MongoPerspective } from './../models/mongo/perspective.mongo';
+import { MongoGoal } from './../models/mongo/goal.mongo';
+
 import { GoalApiResult } from './../models/api/goal';
 import { PerspectiveApiResult } from './../models/api/perspective';
 
@@ -16,7 +18,7 @@ export class PerspectiveService{
         let period:any = utils.getPeriodFromParams( from, to );
 
         // desired result
-        return this.getPerspectives(customerId, true, period.from, period.to)
+        return this.getPerspectivesWithPerformance(customerId, true, period.from, period.to)
             .then(function(perspectives){
                 return {
                     filterDateFrom: period.from,
@@ -25,8 +27,36 @@ export class PerspectiveService{
                 };
             });
     }
+    
+    static getAll(customerId:string, withGoals:Boolean):Promise<Array<PerspectiveApiResult>>{
+        return Promise.all([
+            PerspectiveDataService.getPerspectives(customerId),
+            GoalService.getByCustomerId(customerId)
+        ]).then(function onBothPromisesResult(values:any){
+            let perspectives:Array<MongoPerspective> = values[0] as Array<MongoPerspective>;
+            let goals:Array<MongoGoal> = values[1] as Array<MongoGoal>;
+            let result:Array<PerspectiveApiResult> = [];
 
-    private static getPerspectives(customerId:string, withPerformance:Boolean, from: Date, to:Date):Promise<Array<PerspectiveApiResult>>{
+            for(var i=0; i< perspectives.length; i++){
+                let perspectiveGoals:Array<MongoGoal> = _.filter(goals, _.matchesProperty('perspectiveId', perspectives[i]._id.toString()));
+                result.push(_.extend(perspectives[i],{
+                     goals: perspectiveGoals as Array<GoalApiResult>
+                }) as PerspectiveApiResult);
+            }
+
+            return result;
+        });
+    }
+
+    static save(customerId:string, perspectives:Array<PerspectiveApiResult>):Promise<any[]>{
+        var perspectiveArray:Array<Promise<any>> = [];
+        for(var i=0; i < perspectives.length; i++){
+            perspectiveArray.push(PerspectiveDataService.update(perspectives[i]));
+        }
+        return Promise.all(perspectiveArray);
+    }
+
+    private static getPerspectivesWithPerformance(customerId:string, withPerformance:Boolean, from: Date, to:Date):Promise<Array<PerspectiveApiResult>>{
         let self = this;
 
         return Promise.all([
@@ -40,14 +70,11 @@ export class PerspectiveService{
             
             for (var index = 0; index < perspectives.length; index++) {
                 let perspectiveGoals = _.filter(goals, _.matchesProperty('perspectiveId', perspectives[index]._id.toString()));
-    
-                result.push(new PerspectiveApiResult(
-                    perspectives[index]._id.toString(),
-                    perspectives[index].customerId,
-                    perspectives[index].title,
-                    perspectiveGoals,
-                    self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals)
-                ));
+                
+                result.push(_.extend(perspectives[index], {
+                    goals: perspectiveGoals,
+                    performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals)
+                }) as PerspectiveApiResult);
             }
             return result;
 

@@ -4,14 +4,13 @@ var _ = require("lodash");
 var goal_service_1 = require("./goal.service");
 var perspective_entity_1 = require("./../data/perspective.entity");
 var shared_1 = require("./../models/shared");
-var perspective_1 = require("./../models/api/perspective");
 var PerspectiveService = (function () {
     function PerspectiveService() {
     }
     PerspectiveService.getDashboard = function (customerId, from, to) {
         var period = utils.getPeriodFromParams(from, to);
         // desired result
-        return this.getPerspectives(customerId, true, period.from, period.to)
+        return this.getPerspectivesWithPerformance(customerId, true, period.from, period.to)
             .then(function (perspectives) {
             return {
                 filterDateFrom: period.from,
@@ -20,7 +19,31 @@ var PerspectiveService = (function () {
             };
         });
     };
-    PerspectiveService.getPerspectives = function (customerId, withPerformance, from, to) {
+    PerspectiveService.getAll = function (customerId, withGoals) {
+        return Promise.all([
+            perspective_entity_1.PerspectiveDataService.getPerspectives(customerId),
+            goal_service_1.GoalService.getByCustomerId(customerId)
+        ]).then(function onBothPromisesResult(values) {
+            var perspectives = values[0];
+            var goals = values[1];
+            var result = [];
+            for (var i = 0; i < perspectives.length; i++) {
+                var perspectiveGoals = _.filter(goals, _.matchesProperty('perspectiveId', perspectives[i]._id.toString()));
+                result.push(_.extend(perspectives[i], {
+                    goals: perspectiveGoals
+                }));
+            }
+            return result;
+        });
+    };
+    PerspectiveService.save = function (customerId, perspectives) {
+        var perspectiveArray = [];
+        for (var i = 0; i < perspectives.length; i++) {
+            perspectiveArray.push(perspective_entity_1.PerspectiveDataService.update(perspectives[i]));
+        }
+        return Promise.all(perspectiveArray);
+    };
+    PerspectiveService.getPerspectivesWithPerformance = function (customerId, withPerformance, from, to) {
         var self = this;
         return Promise.all([
             goal_service_1.GoalService.getGoalsPerformance(customerId, false, from, to),
@@ -31,7 +54,10 @@ var PerspectiveService = (function () {
             var result = [];
             for (var index = 0; index < perspectives.length; index++) {
                 var perspectiveGoals = _.filter(goals, _.matchesProperty('perspectiveId', perspectives[index]._id.toString()));
-                result.push(new perspective_1.PerspectiveApiResult(perspectives[index]._id.toString(), perspectives[index].customerId, perspectives[index].title, perspectiveGoals, self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals)));
+                result.push(_.extend(perspectives[index], {
+                    goals: perspectiveGoals,
+                    performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals)
+                }));
             }
             return result;
         });

@@ -3,9 +3,8 @@ import { Http, Response, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
 import 'rxjs/add/operator/map';
 
-import { Goal } from './../models/goal';
-import { Perspective } from './../models/perspective';
-
+import { PerspectiveApiResult } from './../../../../api/models/api/perspective';
+import { GoalApiResult } from './../../../../api/models/api/goal';
 
 @Injectable()
 export class PerspectiveService { 
@@ -13,10 +12,16 @@ export class PerspectiveService {
     constructor(private http : Http){
     }
 
-    get(): Observable<Array<Perspective>>{
+    get(): Observable<Array<PerspectiveApiResult>>{
         return this.http
             .get(`/api/perspectives`, { headers: this.getHeaders()})
             .map(this.mapPerspective);
+    }
+
+    save(perspectives:Array<PerspectiveApiResult>): Observable<Response>{
+        return this.http
+            .post(`/api/perspectives`, perspectives, { headers: this.getHeaders() })
+            .catch(this.handleError);
     }
 
     private getHeaders(){
@@ -25,25 +30,20 @@ export class PerspectiveService {
         return headers;
     }
 
-    mapPerspective(response:Response): Array<Perspective>{
-        let tmpResult = response.json() as Array<any>;
-        let result = new Array<Perspective>();    
+    getId(response:Response):string{
+        let result = response.json() as any;
+        return result.id as string;
+    }
 
-        for(var j=0; j < tmpResult.length; j++){
-            let perspective = new Perspective();      
-            perspective.id = tmpResult[j].id;
-            perspective.title = tmpResult[j].title;
-            perspective.goals = new Array<Goal>();
 
-            for(var i=0; i < tmpResult[j].goals.length; i++){
-                let goal = new Goal();
-                goal.id = tmpResult[j].goals[i].id;
-                goal.title = tmpResult[j].goals[i].title;
-                perspective.goals.push(goal);
-            }
-            result.push(perspective);                
-        }
-      return result;
+    handleError(error: Response) {
+        console.log(error);
+        return Observable.throw(error.json().error || 'Server error');
+    }    
+
+    mapPerspective(response:Response): Array<PerspectiveApiResult>{
+        let tmpResult = response.json() as Array<PerspectiveApiResult>;
+      return tmpResult;
     }
 
 }

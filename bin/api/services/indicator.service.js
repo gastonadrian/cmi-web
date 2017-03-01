@@ -3,11 +3,21 @@ var _ = require("lodash");
 var moment = require("moment");
 var indicator_entity_1 = require("./../data/indicator.entity");
 var shared_1 = require("./../models/shared");
+var indicator_data_1 = require("./../models/mongo/indicator-data");
 var IndicatorService = (function () {
     function IndicatorService() {
     }
+    IndicatorService.get = function (customerId, indicatorId) {
+        return indicator_entity_1.IndicatorDataService.get(customerId, indicatorId);
+    };
+    IndicatorService.getAll = function (customerId) {
+        return indicator_entity_1.IndicatorDataService.getAllByCustomerId(customerId);
+    };
     IndicatorService.getGoalIndicators = function (customerId, goalIds) {
         return indicator_entity_1.IndicatorDataService.getGoalIndicators(customerId, goalIds);
+    };
+    IndicatorService.getIndicatorsByGoalId = function (customerId, goalIds) {
+        return indicator_entity_1.IndicatorDataService.getAllByGoalIds(customerId, goalIds);
     };
     /**
      *
@@ -22,7 +32,7 @@ var IndicatorService = (function () {
         var indicatorIds = [];
         var indicatorsResult = [];
         var self = this;
-        return indicator_entity_1.IndicatorDataService.getIndicators(customerId, goalIds).then(function onGetIndicators(indicators) {
+        return indicator_entity_1.IndicatorDataService.getAllByGoalIds(customerId, goalIds).then(function onGetIndicators(indicators) {
             indicatorIds = indicators.map(function mapIndicatorId(indicator) {
                 return indicator._id.toString();
             });
@@ -37,18 +47,73 @@ var IndicatorService = (function () {
             });
         });
     };
-    IndicatorService.createIndicator = function (customerId, indicator) {
+    IndicatorService.saveIndicator = function (customerId, indicator) {
         indicator.customerId = customerId;
         if (!(indicator.title.length
             && indicator.data && indicator.data.title.length
             && (indicator.performanceComparison === shared_1.PerformanceComparisons.lessThan || indicator.performanceComparison === shared_1.PerformanceComparisons.equals)
-            && indicator.datasource && (indicator.datasource.columnOperation === shared_1.Operations.plus || indicator.datasource.columnOperation === shared_1.Operations.average))) {
+            && indicator.datasource && !!indicator.datasource.columnOperation)) {
             ;
             return new Promise(function (resolve, reject) {
                 return reject('Faltan datos');
             });
         }
-        return indicator_entity_1.IndicatorDataService.insertIndicator(indicator);
+        // is active as long as it has a datasource id assigned
+        indicator.active = !!indicator.datasource._id;
+        if (indicator._id && indicator._id.length) {
+            return indicator_entity_1.IndicatorDataService.updateIndicator(indicator);
+        }
+        else {
+            return indicator_entity_1.IndicatorDataService.insertIndicator(indicator);
+        }
+    };
+    IndicatorService.assignGoal = function (customerId, goalIndicator) {
+        goalIndicator.customerId = customerId;
+        return Promise.all([
+            indicator_entity_1.IndicatorDataService.insertGoalIndicator(customerId, goalIndicator),
+            indicator_entity_1.IndicatorDataService.get(customerId, goalIndicator.indicatorId)
+        ]).then(function onAll(values) {
+            var insertGoalIndicatorResult = values[0];
+            var indicator = values[1];
+            if (!_.includes(indicator.goalIds, goalIndicator.goalId)) {
+                if (!indicator.goalIds) {
+                    indicator.goalIds = [];
+                }
+                // add the goal to "goalIds" property
+                indicator.goalIds.push(goalIndicator.goalId);
+                return indicator_entity_1.IndicatorDataService.updateIndicator(indicator)
+                    .then(function onUpdateResponse(response) {
+                    return { ok: response.ok && insertGoalIndicatorResult.ok };
+                });
+            }
+            return insertGoalIndicatorResult;
+        });
+    };
+    IndicatorService.removeGoal = function (customerId, goalId, indicatorId) {
+        return Promise.all([
+            indicator_entity_1.IndicatorDataService.removeGoalIndicator(customerId, goalId, indicatorId),
+            indicator_entity_1.IndicatorDataService.get(customerId, indicatorId)
+        ]).then(function onAll(values) {
+            var removeGoalIndicatorResult = values[0];
+            var indicator = values[1];
+            _.remove(indicator.goalIds, function (id) {
+                return id == goalId;
+            });
+            return indicator_entity_1.IndicatorDataService.updateIndicator(indicator)
+                .then(function onUpdateResponse(response) {
+                return { ok: response.ok && removeGoalIndicatorResult.ok };
+            });
+        });
+    };
+    IndicatorService.saveIndicatorDataSource = function (customerId, indicator) {
+        return this.get(customerId, indicator._id.toString())
+            .then(function onIndicatorGet(oldIndicator) {
+            oldIndicator.datasource = indicator.datasource;
+            return indicator_entity_1.IndicatorDataService.updateIndicator(oldIndicator);
+        });
+    };
+    IndicatorService.update = function (indicator) {
+        return indicator_entity_1.IndicatorDataService.updateIndicator(indicator);
     };
     IndicatorService.createIndicatorData = function (customerId, indicatorData) {
         indicatorData.customerId = customerId;
@@ -60,6 +125,57 @@ var IndicatorService = (function () {
             });
         }
         return indicator_entity_1.IndicatorDataService.insertIndicatorData([indicatorData]);
+    };
+    IndicatorService.setQuarterExpectation = function (customerId, indicatorId, quarter) {
+        var startOfQuarter = moment(quarter.date).startOf('quarter').toDate();
+        var endOfQuarter = moment(quarter.date).endOf('quarter').subtract(1, 'second').toDate();
+        var self = this;
+        return Promise.all([
+            indicator_entity_1.IndicatorDataService.get(customerId, indicatorId),
+            indicator_entity_1.IndicatorDataService.getIndicatorsData(customerId, [indicatorId], startOfQuarter, endOfQuarter)
+        ]).then(function onResponseAll(values) {
+            // detalles del indicador solicitado
+            var indicator = values[0];
+            var indicatorsData = values[1];
+            // first we need to calculate the month value for the indicator
+            // si la operacion es promediar =>  el valor es el mismo
+            if (indicator.datasource.columnOperation !== shared_1.Operations.average) {
+                // cualquier otra operacion => el  valor se divide en la cantidad de meses
+                quarter.value = quarter.value / 3;
+            }
+            // si ya hay datos importados cargados para este periodo
+            if (indicatorsData.length) {
+                // update indicator data with expectation
+                var promiseArray = [];
+                for (var i = 0; i < indicatorsData.length; i++) {
+                    promiseArray.push(indicator_entity_1.IndicatorDataService.updateIndicatorData(customerId, indicatorId, quarter.value));
+                }
+                return Promise.all(promiseArray)
+                    .then(function (values) {
+                    var isOk = true;
+                    for (var j = 0; j < values.length; j++) {
+                        isOk = isOk && values[j].ok;
+                    }
+                    return { ok: isOk };
+                });
+            }
+            // if there aren't import, create empty imports with expect value set
+            var newIndicatorsData = self.createEmptyIndicatorData(customerId, indicatorId, quarter.value, startOfQuarter, endOfQuarter);
+            return indicator_entity_1.IndicatorDataService.insertIndicatorData(newIndicatorsData)
+                .then(function onInsert(response) {
+                return {
+                    ok: !!response.insertedIds.length
+                };
+            });
+        });
+    };
+    IndicatorService.createEmptyIndicatorData = function (customerId, indicatorId, expected, start, end) {
+        var howManyMonths = moment.duration(moment(end).diff(moment(start))).asMonths();
+        var result = [];
+        for (var i = 0; i < howManyMonths; i++) {
+            result.push(new indicator_data_1.MongoIndicatorData(indicatorId, customerId, moment(start).add(i, 'month').endOf('month').toDate(), null, expected));
+        }
+        return result;
     };
     /**
      *

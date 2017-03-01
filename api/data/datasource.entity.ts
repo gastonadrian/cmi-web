@@ -34,4 +34,8 @@ export class DatasourceDataService{
             });
     }
 
+    static createPerspectives(customerId:string):void{
+        
+    }
+
 }

@@ -1,6 +1,7 @@
 "use strict";
 var BaseIndicator = (function () {
     function BaseIndicator() {
+        this.goalIds = [];
     }
     return BaseIndicator;
 }());

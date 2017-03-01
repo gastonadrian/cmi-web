@@ -6,19 +6,32 @@ import { IndicatorDataService } from './../data/indicator.entity';
 
 import { IPerformance, Operations, SemaphoreStatus, PerformanceComparisons  } from './../models/shared';
 
-import { MongoGoalIndicator } from './../models/mongo/goal-indicator';
+import { MongoGoalIndicator } from './../models/mongo/goal-indicator.mongo';
 import { MongoIndicator } from './../models/mongo/indicator.mongo';
 import { MongoIndicatorData } from './../models/mongo/indicator-data';
 
 import { IndicatorApiResult } from './../models/api/indicator';
-
+import { GoalIndicatorApiResult } from './../models/api/goal-indicator';
+import { IExpectation } from './../models/api/expectation';
 export class IndicatorService{
     
     constructor(){
     }
 
+    static get(customerId:string, indicatorId:string):Promise<any>{
+        return IndicatorDataService.get(customerId, indicatorId);
+    }
+
+    static getAll(customerId:string):Promise<any>{
+        return IndicatorDataService.getAllByCustomerId(customerId);
+    }
+
     static getGoalIndicators(customerId:string, goalIds:Array<string>):Promise<Array<MongoGoalIndicator>>{
         return IndicatorDataService.getGoalIndicators(customerId, goalIds);
+    }
+
+    static getIndicatorsByGoalId(customerId:string, goalIds:Array<string>):Promise<Array<MongoIndicator>>{
+        return IndicatorDataService.getAllByGoalIds(customerId, goalIds);        
     }
 
     /**
@@ -36,7 +49,7 @@ export class IndicatorService{
         let indicatorsResult:Array<IndicatorApiResult> = [];
         let self = this;
 
-        return IndicatorDataService.getIndicators(customerId, goalIds).then(function onGetIndicators(indicators: Array<MongoIndicator>){
+        return IndicatorDataService.getAllByGoalIds(customerId, goalIds).then(function onGetIndicators(indicators: Array<MongoIndicator>){
             
             indicatorIds = indicators.map(function mapIndicatorId(indicator:MongoIndicator){
                 return indicator._id.toString();
@@ -56,18 +69,84 @@ export class IndicatorService{
         });
     }
 
-    static createIndicator(customerId:string, indicator:IndicatorApiResult):Promise<any>{
+    static saveIndicator(customerId:string, indicator:IndicatorApiResult):Promise<any>{
         indicator.customerId = customerId;
         if(!(indicator.title.length 
             && indicator.data && indicator.data.title.length 
             && (indicator.performanceComparison ===  PerformanceComparisons.lessThan || indicator.performanceComparison ===  PerformanceComparisons.equals)
-            && indicator.datasource && ( indicator.datasource.columnOperation === Operations.plus || indicator.datasource.columnOperation === Operations.average ) )){;
+            && indicator.datasource && !!indicator.datasource.columnOperation )){;
             return new Promise(function(resolve, reject){
                 return reject('Faltan datos');
             });
         }
+    
+        // is active as long as it has a datasource id assigned
+        indicator.active = !!indicator.datasource._id;
 
-        return IndicatorDataService.insertIndicator(indicator as MongoIndicator);
+
+        if(indicator._id && indicator._id.length){
+            return IndicatorDataService.updateIndicator(indicator as MongoIndicator);
+        }
+        else{
+            return IndicatorDataService.insertIndicator(indicator as MongoIndicator);
+        }
+    }
+
+    static assignGoal(customerId:string, goalIndicator:GoalIndicatorApiResult):Promise<any>{
+        goalIndicator.customerId = customerId;
+        return Promise.all([
+            IndicatorDataService.insertGoalIndicator(customerId, goalIndicator),
+            IndicatorDataService.get(customerId, goalIndicator.indicatorId)
+        ]).then(function onAll(values:Array<any>){
+            let insertGoalIndicatorResult:any = values[0];
+            let indicator:MongoIndicator = values[1];
+            if(! _.includes(indicator.goalIds, goalIndicator.goalId)){
+
+                if(!indicator.goalIds){
+                    indicator.goalIds = [];
+                }
+
+                // add the goal to "goalIds" property
+                indicator.goalIds.push(goalIndicator.goalId);
+                return IndicatorDataService.updateIndicator(indicator)
+                    .then(function onUpdateResponse(response:any){
+                        return { ok: response.ok && insertGoalIndicatorResult.ok }
+                    });
+            }
+
+            return insertGoalIndicatorResult;
+        });
+    }
+
+    static removeGoal(customerId:string, goalId:string, indicatorId:string):Promise<any>{
+        return Promise.all([
+            IndicatorDataService.removeGoalIndicator(customerId, goalId, indicatorId),
+            IndicatorDataService.get(customerId, indicatorId)
+        ]).then(function onAll(values:Array<any>){
+            let removeGoalIndicatorResult:any = values[0];
+            let indicator:MongoIndicator = values[1];
+
+            _.remove(indicator.goalIds, function(id:string) {
+                return id == goalId;
+            });
+            return IndicatorDataService.updateIndicator(indicator)
+                    .then(function onUpdateResponse(response:any){
+                        return { ok: response.ok && removeGoalIndicatorResult.ok }
+                    });
+        });
+    }
+
+    static saveIndicatorDataSource(customerId:string, indicator:MongoIndicator):Promise<any>{
+        return this.get(customerId, indicator._id.toString())
+            .then(function onIndicatorGet(oldIndicator:MongoIndicator){
+                oldIndicator.datasource = indicator.datasource;
+
+                return IndicatorDataService.updateIndicator(oldIndicator as MongoIndicator);
+            });
+    }
+
+    static update(indicator:MongoIndicator):Promise<any>{
+        return IndicatorDataService.updateIndicator(indicator);       
     }
 
     static createIndicatorData(customerId:string, indicatorData:MongoIndicatorData):Promise<any>{
@@ -83,6 +162,66 @@ export class IndicatorService{
         return IndicatorDataService.insertIndicatorData([indicatorData] as Array<MongoIndicatorData>);
     }
 
+    static setQuarterExpectation(customerId:string, indicatorId:string, quarter:IExpectation){
+        let startOfQuarter:Date = moment(quarter.date).startOf('quarter').toDate();
+        let endOfQuarter:Date = moment(quarter.date).endOf('quarter').subtract(1, 'second').toDate();
+        let self = this;
+
+        return Promise.all([
+            IndicatorDataService.get(customerId, indicatorId),
+            IndicatorDataService.getIndicatorsData(customerId, [indicatorId], startOfQuarter, endOfQuarter)
+        ]).then(function onResponseAll(values:Array<any>){
+                // detalles del indicador solicitado
+                let indicator:MongoIndicator = values[0];
+                let indicatorsData:Array<MongoIndicatorData> = values[1];
+
+                // first we need to calculate the month value for the indicator
+                    // si la operacion es promediar =>  el valor es el mismo
+                if(indicator.datasource.columnOperation !== Operations.average){
+                    // cualquier otra operacion => el  valor se divide en la cantidad de meses
+                    quarter.value = quarter.value / 3;
+                }
+
+                // si ya hay datos importados cargados para este periodo
+                if(indicatorsData.length){
+                    
+                    // update indicator data with expectation
+                    let promiseArray:Array<Promise<any>> = [];
+                    for(var i=0; i < indicatorsData.length; i++){
+                        promiseArray.push(IndicatorDataService.updateIndicatorData(customerId, indicatorId, quarter.value ));                    
+                    }
+    
+                    return Promise.all(promiseArray)
+                        .then(function (values:Array<any>){
+                            let isOk:boolean = true;
+                            for(var j=0; j < values.length; j++){
+                                isOk = isOk && values[j].ok;
+                            }
+                            return { ok: isOk };
+                        });
+                }
+
+                // if there aren't import, create empty imports with expect value set
+                let newIndicatorsData:Array<MongoIndicatorData> = self.createEmptyIndicatorData(customerId, indicatorId, quarter.value, startOfQuarter, endOfQuarter);
+                return IndicatorDataService.insertIndicatorData(newIndicatorsData)
+                    .then(function onInsert(response){
+                        return {
+                            ok: !!response.insertedIds.length
+                        }
+                    });
+            });        
+    }
+
+    private static createEmptyIndicatorData(customerId:string, indicatorId:string, expected:number, start:Date, end:Date):Array<MongoIndicatorData>{
+        let howManyMonths = moment.duration(moment(end).diff(moment(start))).asMonths();
+        let result:Array<MongoIndicatorData> = [];
+
+        for(var i=0; i<howManyMonths; i++){
+            result.push(new MongoIndicatorData(indicatorId, customerId, moment(start).add(i, 'month').endOf('month').toDate(), null, expected));
+        }
+
+        return result;
+    }
     /**
      * 
      * 

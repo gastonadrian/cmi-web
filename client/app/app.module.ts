@@ -2,12 +2,14 @@ import { BrowserModule, Title  } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+
+
 import { AppComponent } from './app.component';
 import { LineChartComponent } from './line-chart/line-chart';
 import { GaugeChartComponent } from './gauge-chart/gauge-chart';
 import { HttpModule } from '@angular/http';
 
-import { GoalService, IndicatorService, PerspectiveService, DashboardService, DataPeriodService } from './shared/services/';
+import { GoalService, IndicatorService, PerspectiveService, DashboardService, DataPeriodService, WindowRef, UserService, AuthGuard } from './shared/services/';
 
 import { DashboardComponent } from './dashboard/dashboard';
 import { DashboardPerspectiveComponent } from './dashboard/dashboard-perspective.component';
@@ -17,11 +19,14 @@ import { IndicatorCreateComponent } from './indicator/indicator-create.component
 import { SemaphoreComponent } from './semaphore/semaphore.component';
 import { GoalCreateComponent } from './goal/goal-create.component';
 import { PerspectiveComponent } from './perspective/perspective.component';
+import { UserCreateComponent } from './user/user-create.component';
 
 import { GoalResolver } from './shared/services/goal-route-resolver';
 import { IndicatorGridResolver } from './shared/services/indicator-grid-route-resolver';
 import { DashboardResolver } from './shared/services/dashboard-route-resolver';
-
+import { PerspectiveResolver } from './shared/services/perspective-resolver';
+import { IndicatorResolver } from './shared/services/indicator-resolver';
+import { IndicatorEditResolver } from './shared/services/indicator-edit-resolver';
 
 const appRoutes: Routes = [
   { 
@@ -37,12 +42,12 @@ const appRoutes: Routes = [
     }    
   },
   { 
-    path: 'goals/:goalid', 
+    path: 'goals/details/:goalid', 
     component: GoalComponent,
     data:{
       title:'Detalle de Objetivos',
       description:'',
-      showPeriods:true
+      showPeriods:true      
     },
     resolve:{
       goal: GoalResolver
@@ -67,6 +72,18 @@ const appRoutes: Routes = [
     }
   },
   { 
+    path: 'indicators/edit/:indicatorid', 
+    component: IndicatorCreateComponent,
+    data:{
+      title:'Editar Indicador',
+      description:'Configuraci&oacute;n de Indicador',
+      showPeriods:false      
+    },
+    resolve:{
+      indicator:IndicatorEditResolver
+    }
+  },  
+  { 
     path: 'semaphore/configure', 
     component: SemaphoreComponent,
     data:{
@@ -76,20 +93,36 @@ const appRoutes: Routes = [
     }
   },
   { 
-    path: 'goalscreate', 
+    path: 'goals/configure/:goalid', 
     component: GoalCreateComponent,
     data:{
       title:'Objetivos',
-      description:'Crear'
-    }
+      description:'Configurar'
+    },
+    resolve:{
+      goal: GoalResolver,
+      perspectives: PerspectiveResolver,
+      indicators: IndicatorResolver
+    }    
   },
   { 
-    path: 'perspectives/configure', 
+    path: 'perspectives', 
     component: PerspectiveComponent,
     data:{
       title:'Perspectivas',
       description:'Configurar',
       showPeriods:false
+    }
+  },  
+  { 
+    path: 'users/create', 
+    component: UserCreateComponent,
+    canActivate: [AuthGuard],
+    data:{
+      title:'Crear Usuario',
+      description:'Creaci&oacute;n de Usuario',
+      showPeriods:false,
+      onlyAdmin:true
     }
   },  
   { 
@@ -111,7 +144,8 @@ const appRoutes: Routes = [
     GoalCreateComponent,
     PerspectiveComponent,
     GaugeChartComponent,
-    DashboardPerspectiveComponent
+    DashboardPerspectiveComponent,
+    UserCreateComponent
   ],
   imports: [
     BrowserModule,
@@ -120,7 +154,7 @@ const appRoutes: Routes = [
     RouterModule.forRoot(appRoutes)
   ],
   providers: [
-    GoalService, 
+    GoalService,
     Title, 
     GoalResolver, 
     IndicatorService, 
@@ -128,7 +162,13 @@ const appRoutes: Routes = [
     PerspectiveService,
     DashboardResolver,
     DashboardService,
-    DataPeriodService
+    DataPeriodService,
+    WindowRef,
+    UserService,
+    AuthGuard,
+    PerspectiveResolver,
+    IndicatorResolver,
+    IndicatorEditResolver
   ],
   bootstrap: [AppComponent]
 })

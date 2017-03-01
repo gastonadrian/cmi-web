@@ -96,7 +96,7 @@ html
                       <a href="#" class="btn btn-default btn-flat">Perfil</a>
                     </div>
                     <div class="pull-right">
-                      <a href="#" class="btn btn-default btn-flat">Cerrar sesion</a>
+                      <a href="/logout" class="btn btn-default btn-flat">Cerrar sesion</a>
                     </div>
                   </li>
                 </ul>
@@ -134,7 +134,7 @@ html
                 </span>
               </a>
               <ul class="treeview-menu">
-                <li><a href="#">Crear</a></li>
+                <li><a href="/goals/create">Crear</a></li>
                 <li><a href="#">Ver listado</a></li>
               </ul>
             </li>
@@ -151,7 +151,7 @@ html
             </li>
             <li><a href="/perspectives"><i class="fa fa-tasks"></i> <span>Perspectivas</span></a></li>
             <li><a href="/configs"><i class="fa fa-sliders"></i> <span>Configuraciones</span></a></li>
-            <li><a href="/profile"><i class="fa fa-user-circle"></i> <span>Perfil</span></a></li>            
+            <li><a href="/profile"><i class="fa fa-user"></i> <span>Perfil</span></a></li>            
           </ul>
           <!-- /.sidebar-menu -->
         </section>
@@ -180,6 +180,7 @@ html
     <script>
     </script>
     script var dataPeriods = !{periods}
+    script var admin = !{admin}
     <script type="text/javascript" src="jquery/dist/jquery.min.js"></script>  
     <script type="text/javascript" src="bootstrap/dist/js/bootstrap.min.js"></script>  
     <script type="text/javascript" src="js/adminLTE.js"></script>

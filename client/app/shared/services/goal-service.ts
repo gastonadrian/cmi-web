@@ -3,9 +3,15 @@ import { Http, Response, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Rx';
 import 'rxjs/add/operator/map';
 
-import { Goal, GoalIndicator } from './../models/goal';
-import { Indicator } from './../models/indicator';
-import { DateValue, Performance } from './../models/shared';
+// import { GoalIndicator } from './../models/goal';
+// import { Indicator } from './../models/indicator';
+// import { DateValue, Performance } from './../models/shared';
+
+import { PerspectiveApiResult } from './../../../../api/models/api/perspective';
+import { GoalApiResult } from './../../../../api/models/api/goal';
+
+import { GoalIndicatorApiResult } from './../../../../api/models/api/goal-indicator';
+import { BackendAppSettings, IColumnOperationOption } from './../../../../api/models/shared';
 
 @Injectable()
 export class GoalService { 
@@ -13,7 +19,7 @@ export class GoalService {
     constructor(private http : Http){
     }
 
-    get(goalId:number): Observable<Goal>{
+    get(goalId:number): Observable<GoalApiResult>{
         return this.http
             .get(`/api/goals/${goalId}`, { headers: this.getHeaders()})
             .map(this.mapGoal);
@@ -25,30 +31,55 @@ export class GoalService {
         return headers;
     }
 
-    mapGoal(response:Response): Goal{
-      let tmpResult = response.json() as any;
-      let result = new Goal();      
-      result.id = tmpResult.id;
-      result.title = tmpResult.title;
-      result.values = tmpResult.values.map( (values:any) => {  return new DateValue(values[0], values[1]); });
-      result.indicators = new Array<GoalIndicator>();
-      for(var i=0; i < tmpResult.indicators.length; i++){
-            let goalIndicator = new GoalIndicator();
-            goalIndicator.goalId = result.id;
-            goalIndicator.factor = 0;
-            goalIndicator.performance = new Performance(tmpResult.dateFrom, tmpResult.indicators[i].performance, tmpResult.indicators[i].semaphoreStatus);
-            goalIndicator.performance.dateTo = tmpResult.dateTo;
-            goalIndicator.indicator = new Indicator();  
-            goalIndicator.indicator.title = tmpResult.indicators[i].title;
-            goalIndicator.indicator.id = tmpResult.indicators[i].id;
-            goalIndicator.indicator.unit = tmpResult.indicators[i].unit === 'value' ? '' : tmpResult.indicators[i].unit;
-            goalIndicator.indicator.operation = tmpResult.indicators[i].operation;
-            goalIndicator.indicator.comparison = tmpResult.indicators[i].comparison;
-            goalIndicator.indicator.values = new Array<DateValue>();
-            goalIndicator.indicator.values.push(new DateValue(new Date(tmpResult.dateFrom), tmpResult.indicators[i].value))
-            result.indicators.push(goalIndicator);
-      }
-      return result;
+    save(goal:GoalApiResult): Observable<Response>{
+        return this.http
+            .post(`/api/goalcreate`, goal, { headers: this.getHeaders() })
+            .map(this.getId)
+            .catch(this.handleError);
     }
 
+    update(goal:GoalApiResult): Observable<Response>{
+        return this.http
+            .post(`/api/goalupdate`, goal, { headers: this.getHeaders() })
+            .catch(this.handleError);
+    }
+
+    delete(goal:GoalApiResult): Observable<Response>{
+        return this.http
+            .post(`/api/goalremove/${goal._id}`, {}, { headers: this.getHeaders() })
+            .map(this.resultOk)
+            .catch(this.handleError);
+    }
+
+    assignIndicator(goalIndicator:GoalIndicatorApiResult): Observable<Response>{
+        return this.http
+            .post(`/api/goalindicator`, goalIndicator, { headers: this.getHeaders() })
+            .map(this.resultOk)
+            .catch(this.handleError);
+    }
+
+    resultOk(response:Response):Boolean{
+        return (response.json() as any).ok;
+    }
+    getId(response:Response):string{
+        let result = response.json() as any;
+        return result.id as string;
+    }
+
+    handleError(error: Response) {
+        return Observable.throw(error.json().error || 'Server error');
+    }
+
+    mapGoal(response:Response): GoalApiResult{
+      let tmp:any = response.json();
+      if(typeof tmp.ok !== undefined){
+          Observable.throw('El Objetivo no existe!');
+      }
+
+      for(var i=0; i < tmp.indicators.length; i++){
+          tmp.indicators[i].columnOperationTitle = BackendAppSettings.columnOperations.find( (value:IColumnOperationOption, index:any, obj:any) => { return value.id === tmp.indicators[i].datasource.columnOperation; }).title;
+      }
+
+      return tmp as GoalApiResult;
+    }
 }

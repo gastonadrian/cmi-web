@@ -1,0 +1,51 @@
+<div class="row">
+    <div class="col-xs-12 col-sm-10">
+        <div class="box box-primary">
+            <div class="box-header with-border">
+                <h3 class="box-title">Informaci&oacute;n Basica</h3>
+            </div>
+            <form name="userForm" (ngSubmit)="onSubmit()" #userForm="ngForm">
+                <div #container class="box-body">
+                    <div class="form-group" [ngClass]="{ 'has-error': !name.valid && !name.pristine }">
+                        <label for="title" class="control-label">Nombre Completo</label>
+                        <input type="text" [(ngModel)]="user.name" class="form-control" name="name" required #name="ngModel">
+                        <p class="help-block" [hidden]="name.valid || name.pristine">Este campo es requerido.</p>
+                    </div>
+                    <div class="form-group" [ngClass]="{ 'has-error': !username.valid && !username.pristine }">
+                        <label for="title" class="control-label">Nombre de usuario</label>
+                        <input type="text" [(ngModel)]="user.nick" class="form-control" name="username" required #username="ngModel">
+                        <p class="help-block" [hidden]="username.valid || username.pristine">Este campo es requerido.</p>
+                    </div>
+                    <div class="form-group" [ngClass]="{ 'has-error': !email.valid && !email.pristine }">
+                        <label for="title" class="control-label">Email</label>
+                        <input type="email" [(ngModel)]="user.email" class="form-control" name="email" required #email="ngModel">
+                        <p class="help-block" [hidden]="email.valid || email.pristine">Este campo es requerido.</p>
+                    </div>
+                    <div class="form-group" [ngClass]="{ 'has-error': !password.valid && !password.pristine }">
+                        <label for="title" class="control-label">Password</label>
+                        <input type="password" [(ngModel)]="user.password" class="form-control" name="password" required #password="ngModel">
+                        <p class="help-block" [hidden]="password.valid || password.pristine">Este campo es requerido.</p>
+                    </div>
+                    <div class="form-group" [ngClass]="{ 'has-error': (!repeat.valid || repeat.value !== password.value) && !repeat.pristine }">
+                        <label for="title" class="control-label">Por favor repita su password</label>
+                        <input type="password" [(ngModel)]="user.repeat" class="form-control" name="repeat" required #repeat="ngModel">
+                        <p class="help-block" [hidden]="repeat.valid || repeat.pristine">Este campo es requerido.</p>    
+                        <p class="help-block" [hidden]="(repeat.value === password.value)  || repeat.pristine">Debe coincidir con el password.</p>
+                    </div>    
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="isAdmin"  [(ngModel)]="user.admin">
+                            Es Administrador
+                        </label>                        
+                    </div>                                    
+                </div>
+                <div class="box-footer">
+                    <button type="button" class="btn btn-default">Cancelar</button>
+                    <button type="submit"  [disabled]="!userForm.form.valid" class="btn btn-primary pull-right">Guardar</button>
+                </div>
+            </form>                    
+        </div>
+    </div>
+</div>
+
+

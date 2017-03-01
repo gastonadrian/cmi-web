@@ -12,6 +12,7 @@ import { DataPeriodService } from './shared/services/data-period-service';
 })
 export class AppComponent implements OnInit{
   public title:string;
+  public shouldBeAdmin:Boolean;
   public routeDescription:string;
   public dataPeriods: Array<DataPeriod> = [];
   public selectedPeriod: DataPeriod;

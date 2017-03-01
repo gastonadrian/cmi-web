@@ -3,7 +3,7 @@ import { Router, ActivatedRoute, Params } from '@angular/router';
 import { LineChartConfig } from './../shared/models/line-chart-config';
 import { GoalService } from './../shared/services/';
 
-import { Goal, GoalIndicator } from './../shared/models/goal';
+import { GoalApiResult } from './../../../api/models/api/goal';
 import { DateValue, Performance } from './../shared/models/shared';
 
 
@@ -13,7 +13,7 @@ import { DateValue, Performance } from './../shared/models/shared';
   templateUrl: 'goal.template.html'
 })
 export class GoalComponent implements OnInit{
-  public goal: Goal;
+  public goal: GoalApiResult;
   public chartConfig: LineChartConfig;
 
   constructor( 
@@ -33,9 +33,10 @@ export class GoalComponent implements OnInit{
             xAxisFormat: 'MMM-YY'
           }, 
           dataset:[{
-            values: this.goal.values.map( (data:DateValue) => {
-              return { x: data.date, y: data.value };
-            }),
+            values:[],
+            // values: this.goal.values.map( (data:DateValue) => {
+            //   return { x: data.date, y: data.value };
+            // }),
             key: this.goal.title,
             color: '#7777ff'
           }] 

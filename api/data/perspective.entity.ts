@@ -1,7 +1,7 @@
 import * as mongoControl from 'mongo-control';
 import * as utils from './../utils';
 
-import { MongoPerspective } from './../models/mongo/perspective';
+import { MongoPerspective } from './../models/mongo/perspective.mongo';
 
 export class PerspectiveDataService{
 
@@ -16,37 +16,43 @@ export class PerspectiveDataService{
         };
         
         return mongoControl.find(findParams);
-        // let perspectives:Array<MongoPerspective> = [
-        //     new MongoPerspective(
-        //         customerId,
-        //         'Perspectiva Financiera',
-        //         {
-        //            redUntil:30,
-        //            yellowUntil:59
-        //         }),
-        //     new MongoPerspective(
-        //         customerId,
-        //         'Perspectiva Clientes',
-        //         {
-        //            redUntil:30,
-        //            yellowUntil:59
-        //         }),
-        //     new MongoPerspective(
-        //         customerId,
-        //         'Perspectiva de Aprendizaje',
-        //         {
-        //            redUntil:30,
-        //            yellowUntil:59
-        //         }),
-        //     new MongoPerspective(
-        //         customerId,
-        //         'Perspectiva de Procesos',
-        //         {
-        //            redUntil:30,
-        //            yellowUntil:59
-        //         })
-        //     ];
+    }
 
+    static createBasePerspectives(customerId:string):Promise<any>{
+
+        let clientes:MongoPerspective =  {
+            "customerId" : customerId,
+            "title" : "Perspectiva Clientes",
+            "semaphore" : {
+                "redUntil" : 30,
+                "yellowUntil" : 59
+            }
+        } as MongoPerspective;
+        var aprendizaje:MongoPerspective = {
+            "customerId" : customerId,
+            "title" : "Perspectiva de Aprendizaje",
+            "semaphore" : {
+                "redUntil" : 30,
+                "yellowUntil" : 59
+            }
+        } as MongoPerspective;
+        var procesos:MongoPerspective = {
+            "customerId" : customerId,
+            "title" : "Perspectiva de Procesos",
+            "semaphore" : {
+                "redUntil" : 30,
+                "yellowUntil" : 59
+            }
+        } as MongoPerspective;
+        var financiera:MongoPerspective = {
+            "customerId" : customerId,
+            "title" : "Perspectiva Financiera",
+            "semaphore" : {
+                "redUntil" : 30,
+                "yellowUntil" : 59
+            }
+        } as MongoPerspective;
+        return this.insertPerspectives([clientes,aprendizaje,procesos,financiera]);
     }
 
     static insertPerspectives(perspectives:Array<MongoPerspective>):Promise<any>{
@@ -56,5 +62,18 @@ export class PerspectiveDataService{
             data: perspectives
         };
         return mongoControl.insert(params);
+    }
+
+    static update(perspective:MongoPerspective):Promise<any>{
+        let params:any = {
+            db: utils.getConnString(),
+            collection: 'perspectives',
+            id:perspective._id
+        };
+
+        delete perspective._id;
+        params.update = perspective;
+
+        return mongoControl.updateById(params);
     }
 }

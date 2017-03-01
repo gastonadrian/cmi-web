@@ -3,13 +3,76 @@ var _ = require("lodash");
 var indicator_service_1 = require("./indicator.service");
 var goal_entity_1 = require("./../data/goal.entity");
 var shared_1 = require("./../models/shared");
-var goal_1 = require("./../models/api/goal");
 var GoalService = (function () {
     function GoalService() {
     }
+    GoalService.get = function (customerId, goalId) {
+        return Promise.all([
+            goal_entity_1.GoalDataService.get(goalId),
+            indicator_service_1.IndicatorService.getIndicatorsByGoalId(customerId, [goalId])
+        ]).then(function onGetAll(values) {
+            var goal = values[0];
+            if (!goal) {
+                return { ok: false };
+            }
+            return _.extend(goal, {
+                indicators: values[1]
+            });
+        });
+    };
+    GoalService.getByCustomerId = function (customerId) {
+        return goal_entity_1.GoalDataService.getByCustomerId(customerId);
+    };
+    GoalService.save = function (customerId, goal) {
+        goal.customerId = customerId;
+        goal.active = false;
+        if (!goal.title.length || !goal.perspectiveId) {
+            return new Promise(function (resolve, reject) {
+                return reject('Faltan datos');
+            });
+        }
+        // a goal is active if at least has one active indicator
+        if (goal.indicators && goal.indicators.length) {
+            goal.active = !!_.filter(goal.indicators, _.matchesProperty('active', true)).length;
+        }
+        return goal_entity_1.GoalDataService.insertGoal(goal);
+    };
+    GoalService.update = function (customerId, goal) {
+        if (!goal.title.length || !goal.perspectiveId) {
+            return new Promise(function (resolve, reject) {
+                return reject('Faltan datos');
+            });
+        }
+        // a goal is active if at least has one active indicator
+        if (goal.indicators && goal.indicators.length) {
+            goal.active = !!_.filter(goal.indicators, _.matchesProperty('active', true)).length;
+        }
+        return goal_entity_1.GoalDataService.update(goal);
+    };
+    GoalService.delete = function (customerId, goalId) {
+        return Promise.all([
+            goal_entity_1.GoalDataService.deleteGoal(customerId, goalId),
+            indicator_service_1.IndicatorService.getIndicatorsByGoalId(customerId, [goalId])
+        ]).then(function onAll(values) {
+            var removeGoalResult = values[0];
+            var indicators = values[1];
+            var promiseArray = [];
+            for (var i = 0; i < indicators.length; i++) {
+                _.remove(indicators[i].goalIds, function (value) { value === goalId; });
+                promiseArray.push(indicator_service_1.IndicatorService.update(indicators[i]));
+            }
+            return Promise.all(promiseArray)
+                .then(function onAllUpdates(updates) {
+                for (var j = 0; j < updates.length; j++) {
+                    removeGoalResult.ok = removeGoalResult.ok && updates[j].ok;
+                }
+                return removeGoalResult;
+            });
+        });
+    };
     GoalService.getGoalsPerformance = function (customerId, withIndicators, from, to) {
         var self = this;
-        return goal_entity_1.GoalDataService.getGoals(customerId, true)
+        return goal_entity_1.GoalDataService.getByCustomerId(customerId, true)
             .then(function onGetGoals(mongoGoals) {
             var indicators, goalIds = [], goalIndicatorSpec = [], result = [];
             // get the performance of all indicators inside the goals
@@ -31,7 +94,11 @@ var GoalService = (function () {
                         return _.includes(ind.goalIds, mongoGoals[i]._id.toString());
                     });
                     var performance = self.calculateGoalPerformance(mongoGoals[i], indicatorsWithPerformance, indicatorSpecs);
-                    result.push(new goal_1.GoalApiResult(mongoGoals[i]._id.toString(), mongoGoals[i].customerId, mongoGoals[i].title, mongoGoals[i].perspectiveId, performance));
+                    result.push(_.extend(mongoGoals[i], {
+                        id: mongoGoals[i]._id.toString(),
+                        performance: performance,
+                        indicators: []
+                    }));
                 }
                 return result;
             });
@@ -44,7 +111,7 @@ var GoalService = (function () {
             value: 0
         };
         for (var i = 0; i < indicators.length; i++) {
-            var goalIndicator = indicatorFactors.find(function (goalInd, index) { return goalInd.indicatorId == indicators[i].id; });
+            var goalIndicator = indicatorFactors.find(function (goalInd, index) { return goalInd.indicatorId == indicators[i]._id; });
             result.value += goalIndicator.factor * unitPercentage * indicators[i].performance.value;
         }
         result.value = result.value;

@@ -1,28 +1,29 @@
 <div class="row">
     <div class="col-xs-12 col-sm-10">
         <div class="box box-primary">
-            <form class="form-inline">
-                <div #container class="box-body table-responsive">
-                    <div *ngFor="let perspective of perspectives">
+            <div #container class="box-body table-responsive">
+                <div *ngFor="let perspective of perspectives; let perspectiveIndex = index;">
+                    <form class="form-inline" #perspectiveForm="ngForm">
                         <h3>{{perspective.title}}</h3>
                         <h4>Sem&aacute;foro</h4>
                         <div class="form">
                             <div class="row">
                                 <label for="" class="control-label col-sm-4 col-xs-12">El sem&aacute;foro estara en rojo desde 0% hasta: </label>
                                 <div class="col-xs-12 col-sm-8">
-                                   <input type="text" class="form-control" value="30%">
+                                   <input type="number" class="form-control" [(ngModel)]="perspective.semaphore.redUntil" name="redUntil" #redUntil="ngModel" required>
+                                    <p *ngIf="!redUntil.valid">Valor requerido</p>
                                 </div>
                             </div>
                             <div class="row">
-                                <label for="" class="control-label col-sm-4 col-xs-12">El sem&aacute;foro estara en amarillo desde 31% hasta: </label>
+                                <label for="" class="control-label col-sm-4 col-xs-12">El sem&aacute;foro estara en amarillo desde {{perspective.semaphore.redUntil}}% hasta: </label>
                                 <div class="col-sm-8 col-xs-12">
-                                    <input type="text" class="form-control" value="59%">
+                                    <input type="number" class="form-control" [(ngModel)]="perspective.semaphore.yellowUntil" name="yellowUntil" #yellowUntil="ngModel" required>
+                                    <p *ngIf="!yellowUntil.valid">Valor requerido</p>
                                 </div>
                             </div>
-                            <p>El sem&aacute;foro estara en verde desde 60% en adelante</p>
+                            <p>El sem&aacute;foro estara en verde desde {{perspective.semaphore.yellowUntil}}% en adelante</p>
 
                         </div>
-                            
                         <h4 style="margin-top:25px">Objetivos</h4>
                         <p class="label label-info">Objetivos resaltados todavian no fueron configurados apropiadamente</p>
                         <table class="table table-responsive table-bordered">
@@ -33,40 +34,33 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr *ngFor="let goal of perspective.goals" [ngClass]="{ 'info': goal.status === 2 }">
+                                <tr *ngFor="let goal of perspective.goals; let goalIndex=index;" [ngClass]="{ 'info': !goal.active }">
                                     <td>
                                         <span [innerHtml]="goal.title"></span>
-                                        <div class="form-group" [ngClass]="{ 'hidden': goal.status !== 3 }">
+                                        <div class="form-group" *ngIf="!goal._id">
                                             <label for="" class="sr-only">Nuevo Objetivo</label>
-                                            <input type="text" class="form-control" placeholder="Nuevo Objetivo">
+                                            <input type="text" class="form-control" required [(ngModel)]="newGoals[perspectiveIndex]" [ngModelOptions]="{standalone: true}" placeholder="Nuevo Objetivo">
                                         </div>                                        
                                     </td>
                                     <td>
-                                        <div class="form-group" [ngClass]="{ 'hidden': goal.status === 3}">
-                                            <button type="button" class="btn btn-default"><i class="fa fa-trash-o text-red"></i> Eliminar</button>
-                                            <button type="button" class="btn btn-default"><i class="fa fa-pencil text-yellow"></i> Configurar</button>
+                                        <div class="form-group" *ngIf="goal._id">
+                                            <button type="button" class="btn btn-default" (click)="deleteGoal(goal, perspectiveIndex, goalIndex)"><i class="fa fa-trash-o text-red"></i> Eliminar</button>
+                                            <a href="/goals/configure/{{goal._id}}" class="btn btn-default"><i class="fa fa-pencil text-yellow"></i> Configurar</a>
                                         </div>
-                                        <div class="form-group" [ngClass]="{ 'hidden': goal.status !== 3 }">
-                                            <button type="button" class="btn btn-default center-block"><i class="fa fa-plus text-green"></i> Agregar</button>
+                                        <div class="form-group" *ngIf="!goal._id">
+                                            <button type="button" class="btn btn-default center-block" (click)="addGoal(perspectiveIndex)"><i class="fa fa-plus text-green"></i> Agregar</button>
                                         </div>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
-
-
-                        
-
-
-
-
-                    </div>
+                    </form>                    
                 </div>
-                <div class="box-footer">
-                    <button type="submit" class="btn btn-default">Cancelar</button>
-                    <button type="submit" class="btn btn-primary pull-right">Guardar</button>
-                </div>                
-            </form>                    
+            </div>
+            <div class="box-footer">
+                <button type="button" class="btn btn-default">Cancelar</button>
+                <button type="button" (click)="save()" class="btn btn-primary pull-right">Guardar</button>
+            </div>                
         </div>
     </div>
 </div>

@@ -27,6 +27,8 @@ var DatasourceDataService = (function () {
             };
         });
     };
+    DatasourceDataService.createPerspectives = function (customerId) {
+    };
     return DatasourceDataService;
 }());
 exports.DatasourceDataService = DatasourceDataService;

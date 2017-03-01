@@ -33,7 +33,7 @@ export interface IDataSource{
     table:string,
     valueColumn: string,
     dateColumn: string,
-    columnOperation:Operations;
+    columnOperation?:Operations;
     rowOperation?: string
 }
 

@@ -1,10 +1,10 @@
 "use strict";
 var MongoIndicatorData = (function () {
-    function MongoIndicatorData(indicatorId, customerId, value, date, expected) {
+    function MongoIndicatorData(indicatorId, customerId, date, value, expected) {
         this.indicatorId = indicatorId;
         this.customerId = customerId;
-        this.value = value;
         this.date = date;
+        this.value = value;
         this.expected = expected;
     }
     return MongoIndicatorData;

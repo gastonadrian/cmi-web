@@ -1,21 +1,10 @@
-import { ISemaphoreConfig, 
-    Operations,
-    IDataDefinition,
-    IDataSource,
-    IPerformance,
-    SemaphoreStatus
- } from './../shared';
-
-
-export class GoalApiResult{
+import { IPerformance } from './../shared';
+import { GoalBase } from  './../goal.base';
+import { IndicatorApiResult } from './indicator';
+export class GoalApiResult extends GoalBase{
     
-    constructor(
-        public _id:string,
-        public customerId:string,
-        public title:string,
-        public perspectiveId:string,
-        public performance: IPerformance
-    ){
-        
-    }
+    public indicators:Array<IndicatorApiResult>;
+
+    public performance?: IPerformance;
+
 };

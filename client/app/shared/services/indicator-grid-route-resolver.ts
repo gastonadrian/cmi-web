@@ -8,13 +8,13 @@ import { Indicator } from './../models/indicator';
 
 
 @Injectable()
-export class IndicatorGridResolver implements Resolve<Indicator> {
+export class IndicatorGridResolver implements Resolve<any> {
   constructor(private indicatorService: IndicatorService, private router: Router) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Indicator> {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
     let id = route.params['indicatorid'];
     let goalId = route.params['goalid'];
 
-    return this.indicatorService.get(id, goalId);
+    return this.indicatorService._get(id, goalId);
   }
 }

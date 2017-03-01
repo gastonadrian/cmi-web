@@ -2,8 +2,8 @@ export class MongoIndicatorData{
     constructor(
     public indicatorId:string,
     public customerId:string,
-    public value:number,
     public date:Date,
+    public value?:number,
     public expected?:number){
 
     }

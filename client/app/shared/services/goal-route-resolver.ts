@@ -4,14 +4,13 @@ import { Router, Resolve, RouterStateSnapshot,
 import { GoalService } from './goal-service';
 import { Observable } from 'rxjs/Rx';
 
-import { Goal, GoalIndicator } from './../models/goal';
-
+import { GoalApiResult } from './../../../../api/models/api/goal';
 
 @Injectable()
-export class GoalResolver implements Resolve<Goal> {
+export class GoalResolver implements Resolve<GoalApiResult> {
   constructor(private goalService: GoalService, private router: Router) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Goal> {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<GoalApiResult> {
     let id = route.params['goalid'];
     return this.goalService.get(id);
   }

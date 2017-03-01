@@ -1,9 +1,85 @@
 "use strict";
 var mongoControl = require("mongo-control");
 var utils = require("./../utils");
+var mongodb_1 = require("mongodb");
 var IndicatorDataService = (function () {
     function IndicatorDataService() {
     }
+    /**
+     *
+     *
+     * @param {any} customerId
+     * @param {any} goalsId
+     * @returns
+     */
+    IndicatorDataService.getAllByGoalIds = function (customerId, goalIds) {
+        var findParams = {
+            db: utils.getConnString(),
+            collection: 'indicators',
+            query: {
+                customerId: customerId,
+                goalIds: {
+                    "$in": goalIds
+                }
+            }
+        };
+        return mongoControl.find(findParams).then(function onIndicatorsResponse(collection) {
+            return collection;
+        });
+    };
+    IndicatorDataService.getAllByCustomerId = function (customerId) {
+        var findParams = {
+            db: utils.getConnString(),
+            collection: 'indicators',
+            query: {
+                customerId: customerId
+            }
+        };
+        return mongoControl.find(findParams);
+    };
+    /**
+     *
+     *
+     * @param {any} customerId
+     * @param {any} indicatorId
+     * @returns
+     */
+    IndicatorDataService.get = function (customerId, indicatorId) {
+        var findParams = {
+            db: utils.getConnString(),
+            collection: 'indicators',
+            id: indicatorId
+        };
+        return mongoControl.getById(findParams);
+    };
+    IndicatorDataService.insertIndicator = function (indicator) {
+        var params = {
+            db: utils.getConnString(),
+            collection: 'indicators',
+            data: [indicator]
+        };
+        return mongoControl.insert(params)
+            .then(function (response) {
+            return {
+                id: response.insertedIds.pop().toString()
+            };
+        });
+    };
+    IndicatorDataService.updateIndicator = function (indicator) {
+        var params = {
+            db: utils.getConnString(),
+            collection: 'indicators',
+            query: {
+                _id: new mongodb_1.ObjectID(indicator._id)
+            }
+        };
+        delete indicator._id;
+        params.update = indicator;
+        return mongoControl.update(params)
+            .then(function (response) {
+            return response.result;
+        });
+    };
     IndicatorDataService.getGoalIndicators = function (customerId, goalIds) {
         var findParams = {
             db: utils.getConnString(),
@@ -19,26 +95,57 @@ var IndicatorDataService = (function () {
             return collection;
         });
     };
-    /**
-     *
-     *
-     * @param {any} customerId
-     * @param {any} goalsId
-     * @returns
-     */
-    IndicatorDataService.getIndicators = function (customerId, goalIds) {
-        var findParams = {
+    IndicatorDataService.insertGoalIndicator = function (customerId, goalIndicator) {
+        var self = this;
+        return this.getGoalIndicators(customerId, [goalIndicator.goalId])
+            .then(function onGetGoalIndicators(goalIndicators) {
+            if (goalIndicators.length) {
+                // update 
+                return self.updateGoalIndicator(customerId, goalIndicator);
+            }
+            var params = {
+                db: utils.getConnString(),
+                collection: 'goal-indicators',
+                data: [goalIndicator]
+            };
+            return mongoControl.insert(params)
+                .then(function (response) {
+                return {
+                    ok: !!response.insertedIds.length
+                };
+            });
+        });
+    };
+    IndicatorDataService.removeGoalIndicator = function (customerId, goalId, indicatorId) {
+        // delete goal-indicator relations
+        var goalIndicatorParams = {
             db: utils.getConnString(),
-            collection: 'indicators',
+            collection: 'goal-indicators',
             query: {
-                customerId: customerId,
-                goalIds: {
-                    "$in": goalIds
-                }
+                goalId: goalId,
+                indicatorId: indicatorId,
+                customerId: customerId
             }
         };
-        return mongoControl.find(findParams).then(function onIndicatorsResponse(collection) {
-            return collection;
+        return mongoControl.remove(goalIndicatorParams)
+            .then(function (response) {
+            return response.result;
+        });
+    };
+    IndicatorDataService.updateGoalIndicator = function (customerId, goalIndicator) {
+        var params = {
+            db: utils.getConnString(),
+            collection: 'goal-indicators',
+            query: {
+                customerId: customerId,
+                goalId: goalIndicator.goalId,
+                indicatorId: goalIndicator.indicatorId
+            },
+            update: goalIndicator
+        };
+        return mongoControl.update(params)
+            .then(function (response) {
+            return response.result;
         });
     };
     /**
@@ -67,14 +174,6 @@ var IndicatorDataService = (function () {
         };
         return mongoControl.find(findParams);
     };
-    IndicatorDataService.insertIndicator = function (indicator) {
-        var params = {
-            db: utils.getConnString(),
-            collection: 'indicators',
-            data: [indicator]
-        };
-        return mongoControl.insert(params);
-    };
     IndicatorDataService.insertIndicatorData = function (indicatorDataArray) {
         var params = {
             db: utils.getConnString(),
@@ -83,13 +182,22 @@ var IndicatorDataService = (function () {
         };
         return mongoControl.insert(params);
     };
-    IndicatorDataService.insertGoalIndicator = function (goalIndicatorArray) {
+    IndicatorDataService.updateIndicatorData = function (customerId, indicatorId, expected) {
         var params = {
             db: utils.getConnString(),
-            collection: 'goal-indicators',
-            data: goalIndicatorArray
+            collection: 'indicators-data',
+            query: {
+                customerId: customerId,
+                indicatorId: indicatorId
+            },
+            update: {
+                expected: expected
+            }
         };
-        return mongoControl.insert(params);
+        return mongoControl.update(params)
+            .then(function (response) {
+            return response.result;
+        });
     };
     return IndicatorDataService;
 }());

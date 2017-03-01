@@ -1,15 +1,8 @@
 import { IPerformance } from './../shared';
 import { GoalApiResult } from './goal';
+import { PerspectiveBase } from './../perspective.base';
 
-export class PerspectiveApiResult{
-    
-    constructor(
-        public _id:string,
-        public customerId:string,
-        public title:string,
-        public goals:Array<GoalApiResult>,
-        public performance?: IPerformance
-    ){
-        
-    }
+export class PerspectiveApiResult extends PerspectiveBase{
+    public goals:Array<GoalApiResult>;
+    public performance?: IPerformance;
 };

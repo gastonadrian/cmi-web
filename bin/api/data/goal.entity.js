@@ -1,203 +1,30 @@
 "use strict";
 var mongoControl = require("mongo-control");
 var utils = require("./../utils");
+var mongodb_1 = require("mongodb");
 var GoalDataService = (function () {
     function GoalDataService() {
     }
-    GoalDataService.getGoals = function (customerId, active) {
+    GoalDataService.get = function (goalId) {
+        var findParams = {
+            db: utils.getConnString(),
+            collection: 'goals',
+            id: goalId
+        };
+        return mongoControl.getById(findParams);
+    };
+    GoalDataService.getByCustomerId = function (customerId, active) {
         var findParams = {
             db: utils.getConnString(),
             collection: 'goals',
             query: {
-                customerId: customerId,
-                active: active
+                customerId: customerId
             }
         };
+        if (active === false || active === true) {
+            findParams.query.active = true;
+        }
         return mongoControl.find(findParams);
-        // return[
-        // {
-        //     id: 1,
-        //     customerId:22,
-        //     title: 'Crecimiento de ingresos y carteras de clientes',
-        //     perspective:1,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 2,
-        //     title: 'Utilizaci&oacute;n de inversiones y activos',
-        //     perspective:1,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }            
-        // },
-        // {
-        //     id: 3,
-        //     title: 'Reducci&oacute;n de costes y mejora de la productividad',
-        //     perspective:1,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 4,
-        //     title: 'Crear valor para el accionista',
-        //     perspective:1,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 5,
-        //     title: 'Reducir la morosidad',
-        //     perspective:1,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     } 
-        // }
-        // {
-        //     id: 6,
-        //     title: 'Cuota de mercado',
-        //     perspective:2,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 7,
-        //     title: 'Retenci&oacute;n y fidelizaci&oacute;n de clientes',
-        //     perspective:2,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 8,
-        //     title: 'Adquisici&oacute;n de nuevos clientes',
-        //     perspective:2,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 9,
-        //     title: 'Satisfacci&oacute;n del cliente',
-        //     indicators: [],
-        //     perspective:2,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 10,
-        //     title: 'Rentabilidad',
-        //     indicators: [],
-        //     perspective:2,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 11,
-        //     title: 'Capacidad del personal',
-        //     perspective:3,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 12,
-        //     title: 'Utilizaci&oacute;n de inversiones y activos',
-        //     indicators: [],
-        //     perspective:3,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 13,
-        //     title: 'Motivaci&oacute;n y alineamiento',
-        //     perspective:3,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 14,
-        //     title: 'Reducir bajas laborales',
-        //     perspective:3,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 15,
-        //     title: 'Mejorar la formaci&oacute;n',
-        //     perspective:3,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // new MongoGoal(
-        //     '16',
-        //     customerId,
-        //     'Proceso de operaciones',
-        //     '4',
-        //     0.30,
-        //     0.59)
-        // {
-        //     id: 17,
-        //     title: 'Proceso de servicio postventa',
-        //     perspective:4,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 18,
-        //     title: 'Mejorar relaci&oacute;n con distribuidor',
-        //     perspective:4,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 19,
-        //     title: 'Gestionar recursos internos',
-        //     perspective:4,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // },
-        // {
-        //     id: 20,
-        //     title: 'Renovaci&oacute;n de maquinaria',
-        //     perspective:4,
-        //     semaphore:{
-        //         redUntil:30,
-        //         yellowUntil:59                    
-        //     }
-        // }            
-        // ];
     };
     GoalDataService.insertGoal = function (goal) {
         var params = {
@@ -205,7 +32,49 @@ var GoalDataService = (function () {
             collection: 'goals',
             data: [goal]
         };
-        return mongoControl.insert(params);
+        return mongoControl.insert(params)
+            .then(function (response) {
+            return {
+                id: response.insertedIds.pop().toString()
+            };
+        });
+    };
+    GoalDataService.update = function (goal) {
+        var params = {
+            db: utils.getConnString(),
+            collection: 'goals',
+            id: goal._id
+        };
+        delete goal._id;
+        params.update = goal;
+        return mongoControl.updateById(params);
+    };
+    GoalDataService.deleteGoal = function (customerId, goalId) {
+        // delete goal-indicator relations
+        var goalIndicatorParams = {
+            db: utils.getConnString(),
+            collection: 'goal-indicators',
+            query: {
+                goalId: goalId,
+                customerId: customerId
+            }
+        };
+        return mongoControl.remove(goalIndicatorParams)
+            .then(function (response) {
+            // delete goal
+            var params = {
+                db: utils.getConnString(),
+                collection: 'goals',
+                query: {
+                    _id: new mongodb_1.ObjectID(goalId),
+                    customerId: customerId
+                }
+            };
+            return mongoControl.remove(params)
+                .then(function (response) {
+                return response.result;
+            });
+        });
     };
     return GoalDataService;
 }());

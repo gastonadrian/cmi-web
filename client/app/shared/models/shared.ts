@@ -15,10 +15,12 @@ export class DataPeriod{
 }
 
 declare let dataPeriods:any;
+declare let admin:any;
 
 export class AppSettings{
     
     public static dateFormat:string = 'YYYYMMDD';
+    public static admin: any = admin;
     public static dataPeriods:Array<any> = dataPeriods;
 
     public static semaphoreStatusText:Array<string> = ['','green','yellow','red'];

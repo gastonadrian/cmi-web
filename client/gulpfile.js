@@ -51,7 +51,7 @@ gulp.task('compile-angular2',
 
 gulp.task('bundle-angular2', ['compile-angular2'], runCommand('node_modules/.bin/rollup -c rollup-config.js'));
 
-gulp.task('build', ['bundle-angular2'], function(){
+gulp.task('build', ['default','bundle-angular2'], function(){
   return del(['app/**/*.js','app/**/*.js.map','aot/','!app/adminLTE.js']);
 });
 
@@ -76,4 +76,9 @@ gulp.task('img', function(){
         .pipe(gulp.dest('./dist/img'));
 });
 
-gulp.task('default', ['less','js','img']);
+gulp.task('favicon', function(){
+  gulp.src('./favicon.ico')
+    .pipe(gulp.dest('./dist'));
+});
+
+gulp.task('default', ['less','img','favicon']);
