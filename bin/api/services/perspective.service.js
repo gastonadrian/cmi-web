@@ -21,6 +21,8 @@ var PerspectiveService = (function () {
         });
     };
     PerspectiveService.getAll = function (customerId, withGoals) {
+        console.log('_ existe!', _);
+
         return Promise.all([
             perspective_entity_1.PerspectiveDataService.getPerspectives(customerId),
             goal_service_1.GoalService.getByCustomerId(customerId)
