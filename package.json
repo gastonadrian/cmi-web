@@ -50,6 +50,9 @@
   ],
   "author": "Gaston Moreno & Roberto Cabrera",
   "license": "ISC",
+  "engines": {
+    "node": ">=4.3.2"
+  },  
   "bugs": {
     "url": "https://github.com/gastonadrian/cmi-data-collector/issues"
   },
