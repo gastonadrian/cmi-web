@@ -95,6 +95,7 @@ passport.deserializeUser(function (token, done) {
     }, function (error, result) {
         if (result.ok) {
             result.login.admin = result.user.admin;
+            result.login.name = result.user.name;
             return done(null, result.login);
         }
         else {
@@ -110,7 +111,7 @@ app.use(require('body-parser').json())
     .listen(8080);
 app.get('/', require('connect-ensure-login').ensureLoggedIn(), function (req, res) {
     var dataPeriods = JSON.stringify(utils.getDataPeriods());
-    res.render('index', { title: 'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false) });
+    res.render('index', { title: 'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false), username: (req.user ? req.user.name : 'anonimo') });
 });
 app.get('/login', function (req, res) {
     res.render('login');
@@ -123,6 +124,7 @@ app.get('/logout', function (req, res) {
 app.all('*', require('connect-ensure-login').ensureLoggedIn(), function (req, res) {
     console.log("[TRACE] Server 404 request: " + req.originalUrl);
     var dataPeriods = JSON.stringify(utils.getDataPeriods());
-    res.render('index', { title: 'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false) });
+    console.log(req.user.name);
+    res.render('index', { title: 'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false), username: (req.user ? req.user.name : 'anonimo') });
 });
 //# sourceMappingURL=app.js.map

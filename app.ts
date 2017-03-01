@@ -121,6 +121,7 @@ passport.deserializeUser(function(token, done) {
         function(error, result) {
             if(result.ok){
                 result.login.admin = result.user.admin;
+                result.login.name = result.user.name;
                 return done(null, result.login);
             } else {
                 return done(null, result.why);
@@ -141,7 +142,7 @@ app.get('/',
     require('connect-ensure-login').ensureLoggedIn(),
     function (req:any, res:any) {
         let dataPeriods:string = JSON.stringify(utils.getDataPeriods());
-        res.render('index', { title:'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false) })
+        res.render('index', { title:'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false), username: (req.user ? req.user.name : 'anonimo') })
     }
 );
 
@@ -162,6 +163,7 @@ app.all('*',
     function(req:any, res:any){
         console.log(`[TRACE] Server 404 request: ${req.originalUrl}`);
         let dataPeriods:string = JSON.stringify(utils.getDataPeriods());
-        res.render('index', { title:'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false) });
+        console.log(req.user.name)
+        res.render('index', { title:'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false), username: (req.user ? req.user.name : 'anonimo') });
     } 
 );
