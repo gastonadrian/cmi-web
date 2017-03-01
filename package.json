@@ -17,6 +17,7 @@
     "express": "4.14.0",
     "express-session": "1.15.1",
     "gulp": "^3.9.1",
+    "lodash": "^4.17.4",
     "moment": "^2.17.1",
     "mongo-control": "^1.0.68",
     "passport": "^0.3.2",
