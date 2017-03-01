@@ -8,7 +8,6 @@ var PerspectiveService = (function () {
     function PerspectiveService() {
     }
     PerspectiveService.getDashboard = function (customerId, from, to) {
-        console.log('entering perspective service');
         var period = utils.getPeriodFromParams(from, to);
         // desired result
         return this.getPerspectivesWithPerformance(customerId, true, period.from, period.to)
@@ -21,15 +20,10 @@ var PerspectiveService = (function () {
         });
     };
     PerspectiveService.getAll = function (customerId, withGoals) {
-
-
-        console.warn(_.matchesProperty, 'matches');
-
         return Promise.all([
             perspective_entity_1.PerspectiveDataService.getPerspectives(customerId),
             goal_service_1.GoalService.getByCustomerId(customerId)
         ]).then(function onBothPromisesResult(values) {
-            console.warn('perspectives', values[0])
             var perspectives = values[0];
             var goals = values[1];
             var result = [];

@@ -4,14 +4,12 @@ module.exports = function perspectiveApi() {
     this.add('role:perspectives,cmd:getall', getAll);
     this.add('role:perspectives,cmd:save', save);
     function getDashboard(msg, respond) {
-        console.warn('entering perspective api');
         perspectiveService.getDashboard(msg.args.params.customerId, msg.args.params.from, msg.args.params.to)
             .then(function onGetDashboard(result) {
             respond(null, result);
         });
     }
     function getAll(msg, respond) {
-        console.warn('entering perspective api');
         perspectiveService.getAll(msg.args.params.customerId)
             .then(function onGetAll(result) {
             respond(null, result);
