@@ -16,7 +16,7 @@
     "outDir": "./bin"
   },
   "files": [
-    "app.ts",
+    "main.ts",
     "api/models/index",
     "api/services/index",
     "api/data/index"    

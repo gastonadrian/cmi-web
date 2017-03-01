@@ -157,6 +157,11 @@ app.get('/logout',
     }
 );
 
+app.get('/_ah/health', function (req, res){
+    res.send({ ok: true });
+});
+
+
 // 404 catch 
 app.all('*', 
     require('connect-ensure-login').ensureLoggedIn(),
