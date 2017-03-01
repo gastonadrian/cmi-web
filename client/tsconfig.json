@@ -21,7 +21,9 @@
     "app/app.module.ts",
     "app/main.ts"
   ],
-
+  "exclude": [
+        "api"
+  ],
   "angularCompilerOptions": {
    "genDir": "aot",
    "skipMetadataEmit" : true

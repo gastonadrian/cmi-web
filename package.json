@@ -35,7 +35,7 @@
   "scripts": {
     "test": "test",
     "express": "rm -r ./bin && tsc",
-    "start": "cd ./client && gulp build && cd .. && tsc && node ./bin/app.js"
+    "start": "cd ./client && gulp build && cd .. && rm -r ./bin && tsc && node ./bin/app.js"
   },
   "repository": {
     "type": "git",
