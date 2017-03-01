@@ -108,7 +108,7 @@ app.use(passport.session());
 app.use(require('body-parser').json())
     .use(require('body-parser').urlencoded({ extended: true }))
     .use(context)
-    .listen(8080);
+    .listen(process.env.PORT || 8080);
 app.get('/', require('connect-ensure-login').ensureLoggedIn(), function (req, res) {
     var dataPeriods = JSON.stringify(utils.getDataPeriods());
     res.render('index', { title: 'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false), username: (req.user ? req.user.name : 'anonimo') });
