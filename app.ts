@@ -163,7 +163,7 @@ app.all('*',
     function(req:any, res:any){
         console.log(`[TRACE] Server 404 request: ${req.originalUrl}`);
         let dataPeriods:string = JSON.stringify(utils.getDataPeriods());
-        console.log(req.user.name)
+        // console.log(req.user.name)
         res.render('index', { title:'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false), username: (req.user ? req.user.name : 'anonimo') });
     } 
 );

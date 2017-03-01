@@ -124,7 +124,7 @@ app.get('/logout', function (req, res) {
 app.all('*', require('connect-ensure-login').ensureLoggedIn(), function (req, res) {
     console.log("[TRACE] Server 404 request: " + req.originalUrl);
     var dataPeriods = JSON.stringify(utils.getDataPeriods());
-    console.log(req.user.name);
+    // console.log(req.user.name)
     res.render('index', { title: 'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false), username: (req.user ? req.user.name : 'anonimo') });
 });
 //# sourceMappingURL=app.js.map

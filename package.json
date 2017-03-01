@@ -10,11 +10,13 @@
     "@types/mongodb": "^2.1.40",
     "@types/seneca": "^2.1.5",
     "body-parser": "^1.15.2",
+    "bower": "^1.8.0",
     "connect-ensure-login": "^0.1.1",
     "cookie-parser": "^1.4.3",
     "dotenv": "^4.0.0",
     "express": "^4.14.0",
     "express-session": "^1.15.1",
+    "gulp": "^3.9.1",
     "moment": "^2.17.1",
     "mongo-control": "^1.0.68",
     "passport": "^0.3.2",
@@ -35,7 +37,8 @@
   "scripts": {
     "test": "test",
     "express": "rm -r ./bin && tsc",
-    "start": "cd ./client && gulp build && cd .. && rm -r ./bin && tsc && node ./bin/app.js"
+    "build": "cd ./client && gulp build && cd .. && rm -r ./bin && tsc && node ./bin/app.js",
+    "start": "node ./bin/app.js"
   },
   "repository": {
     "type": "git",
@@ -52,7 +55,7 @@
   "license": "ISC",
   "engines": {
     "node": ">=4.3.2"
-  },  
+  },
   "bugs": {
     "url": "https://github.com/gastonadrian/cmi-data-collector/issues"
   },
