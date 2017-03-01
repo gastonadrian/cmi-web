@@ -40,9 +40,9 @@ let senecaWebConfig:any = {
 app.set('view engine', 'pug');
 app.set('views', './client/app');
 
-app.use(express.static('./client/dist'));
-app.use(express.static('./client/bower_components'));
-app.use(express.static('./client/node_modules'));
+app.use(express.static(__dirname + '/client/dist'));
+app.use(express.static(__dirname + 'client/bower_components'));
+app.use(express.static(__dirname + '/client/node_modules'));
 
 app.use(cookieParser());
 app.use(session({secret: 'magically', resave: false, saveUninitialized: false}));
