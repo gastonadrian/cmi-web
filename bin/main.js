@@ -120,6 +120,9 @@ app.get('/logout', function (req, res) {
     req.logout();
     res.redirect('/');
 });
+app.get('/_ah/health', function (req, res) {
+    res.send({ ok: true });
+});
 // 404 catch 
 app.all('*', require('connect-ensure-login').ensureLoggedIn(), function (req, res) {
     console.log("[TRACE] Server 404 request: " + req.originalUrl);
@@ -127,4 +130,4 @@ app.all('*', require('connect-ensure-login').ensureLoggedIn(), function (req, re
     // console.log(req.user.name)
     res.render('index', { title: 'Cuadro de Mando Integral', periods: dataPeriods, admin: (req.user ? req.user.admin : false), username: (req.user ? req.user.name : 'anonimo') });
 });
-//# sourceMappingURL=app.js.map
+//# sourceMappingURL=main.js.map
