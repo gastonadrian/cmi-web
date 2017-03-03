@@ -23,32 +23,32 @@ export class PerspectiveDataService{
             "customerId" : customerId,
             "title" : "Perspectiva Financiera",
             "semaphore" : {
-                "redUntil" : 30,
-                "yellowUntil" : 59
+                "redUntil" : 0.3,
+                "yellowUntil" : 0.59
             }
         } as MongoPerspective;
         let clientes:MongoPerspective =  {
             "customerId" : customerId,
             "title" : "Perspectiva Clientes",
             "semaphore" : {
-                "redUntil" : 30,
-                "yellowUntil" : 59
+                "redUntil" : 0.3,
+                "yellowUntil" : 0.59
             }
         } as MongoPerspective;
         var procesos:MongoPerspective = {
             "customerId" : customerId,
             "title" : "Perspectiva de Procesos",
             "semaphore" : {
-                "redUntil" : 30,
-                "yellowUntil" : 59
+                "redUntil" : 0.3,
+                "yellowUntil" : 0.59
             }
         } as MongoPerspective;
         var aprendizaje:MongoPerspective = {
             "customerId" : customerId,
             "title" : "Perspectiva de Aprendizaje",
             "semaphore" : {
-                "redUntil" : 30,
-                "yellowUntil" : 59
+                "redUntil" : 0.3,
+                "yellowUntil" : 0.59
             }
         } as MongoPerspective;
 

@@ -19,32 +19,32 @@ var PerspectiveDataService = (function () {
             "customerId": customerId,
             "title": "Perspectiva Financiera",
             "semaphore": {
-                "redUntil": 30,
-                "yellowUntil": 59
+                "redUntil": 0.3,
+                "yellowUntil": 0.59
             }
         };
         var clientes = {
             "customerId": customerId,
             "title": "Perspectiva Clientes",
             "semaphore": {
-                "redUntil": 30,
-                "yellowUntil": 59
+                "redUntil": 0.3,
+                "yellowUntil": 0.59
             }
         };
         var procesos = {
             "customerId": customerId,
             "title": "Perspectiva de Procesos",
             "semaphore": {
-                "redUntil": 30,
-                "yellowUntil": 59
+                "redUntil": 0.3,
+                "yellowUntil": 0.59
             }
         };
         var aprendizaje = {
             "customerId": customerId,
             "title": "Perspectiva de Aprendizaje",
             "semaphore": {
-                "redUntil": 30,
-                "yellowUntil": 59
+                "redUntil": 0.3,
+                "yellowUntil": 0.59
             }
         };
         return this.insertPerspectives([financiera, clientes, procesos, aprendizaje]);
