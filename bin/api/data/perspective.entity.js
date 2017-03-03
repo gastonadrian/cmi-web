@@ -15,17 +15,17 @@ var PerspectiveDataService = (function () {
         return mongoControl.find(findParams);
     };
     PerspectiveDataService.createBasePerspectives = function (customerId) {
-        var clientes = {
+        var financiera = {
             "customerId": customerId,
-            "title": "Perspectiva Clientes",
+            "title": "Perspectiva Financiera",
             "semaphore": {
                 "redUntil": 30,
                 "yellowUntil": 59
             }
         };
-        var aprendizaje = {
+        var clientes = {
             "customerId": customerId,
-            "title": "Perspectiva de Aprendizaje",
+            "title": "Perspectiva Clientes",
             "semaphore": {
                 "redUntil": 30,
                 "yellowUntil": 59
@@ -39,15 +39,15 @@ var PerspectiveDataService = (function () {
                 "yellowUntil": 59
             }
         };
-        var financiera = {
+        var aprendizaje = {
             "customerId": customerId,
-            "title": "Perspectiva Financiera",
+            "title": "Perspectiva de Aprendizaje",
             "semaphore": {
                 "redUntil": 30,
                 "yellowUntil": 59
             }
         };
-        return this.insertPerspectives([clientes, aprendizaje, procesos, financiera]);
+        return this.insertPerspectives([financiera, clientes, procesos, aprendizaje]);
     };
     PerspectiveDataService.insertPerspectives = function (perspectives) {
         var params = {
