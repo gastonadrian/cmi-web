@@ -7,6 +7,7 @@ import { MongoIndicator } from './../models/mongo/indicator.mongo';
 import { MongoIndicatorData} from './../models/mongo/indicator-data';
 import { MongoGoalIndicator } from './../models/mongo/goal-indicator.mongo';
 import { GoalIndicatorApiResult } from './../models/api/goal-indicator';
+import { IIndicatorSync } from './../models/indicator-sync.interface';
 
 export class IndicatorDataService{
     constructor(){}
@@ -35,7 +36,37 @@ export class IndicatorDataService{
         });
     }
 
-    static getAllByCustomerId(customerId:string): Promise<Array<MongoIndicator>>{
+    static getIndicatorsLastSync(indicatorIds:Array<string>):Promise<Array<IIndicatorSync>>{
+
+        if(!indicatorIds.length){
+            return new Promise(function (resolve, reject){
+                resolve([]);
+            });
+        }
+
+        let aggregateParams:any = {
+            db: utils.getConnString(),
+            collection: 'indicators-data',
+            pipeline: [
+                { 
+                    '$match': { 
+                        'indicatorId': {
+                            '$in': indicatorIds
+                        }
+                    }
+                },
+                {
+                    '$group':{
+                        '_id': '$indicatorId',
+                        'date': { '$max': '$date' }
+                    }
+                }
+            ]
+        };
+            
+        return mongoControl.aggregate(aggregateParams);
+    }
+    static getAllByCustomerId(customerId:string, active?:Boolean): Promise<Array<MongoIndicator>>{
         let findParams:any = {
             db: utils.getConnString(),
             collection: 'indicators',
@@ -43,6 +74,11 @@ export class IndicatorDataService{
                 customerId:customerId
             }
         };
+
+
+        if(active === false || active === true){
+            findParams.query.active = active;
+        }
 
         return mongoControl.find(findParams);
     }
@@ -66,11 +102,17 @@ export class IndicatorDataService{
 
     static insertIndicator(indicator:MongoIndicator):Promise<any>{
 
+        // is active as long as it has a datasource id assigned
+        indicator.active = !!indicator.datasource._id;
+
+
         let params:any = {
             db: utils.getConnString(),
             collection: 'indicators',
             data: [indicator]
         };
+
+
 
         return mongoControl.insert(params)
             .then(function(response:any){
@@ -187,7 +229,7 @@ export class IndicatorDataService{
      * @param {any} to
      * @returns
      */
-    static getIndicatorsData(customerId:string, indicatorIds:Array<string>, from:Date, to:Date):Promise<Array<MongoIndicatorData>>{
+    static getIndicatorsData(customerId:string, indicatorIds:Array<string>, from?:Date, to?:Date):Promise<Array<MongoIndicatorData>>{
         let findParams:any = {
             db: utils.getConnString(),
             collection: 'indicators-data',
@@ -195,13 +237,16 @@ export class IndicatorDataService{
                 customerId:customerId,
                 indicatorId: {
                     "$in":indicatorIds
-                },
-                date:{
-                    "$gte": from,
-                    "$lte": to
                 }
             }
         };
+
+        if(from && to){
+            findParams.query.date = {
+                "$gte": from,
+                "$lte": to
+            };
+        }
         
         return mongoControl.find(findParams);
     }
@@ -219,13 +264,14 @@ export class IndicatorDataService{
         return mongoControl.insert(params);
     }
 
-    static updateIndicatorData(customerId:string, indicatorId:string, expected:number):Promise<any>{
+    static updateIndicatorData(customerId:string, indicatorId:string, date:Date, expected:number):Promise<any>{
         let params:any = {
             db: utils.getConnString(),
             collection: 'indicators-data',
             query: {
                 customerId: customerId,
-                indicatorId: indicatorId 
+                indicatorId: indicatorId,
+                date: date
             },
             update: {
                 expected: expected

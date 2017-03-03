@@ -20,6 +20,9 @@ var GoalService = (function () {
             });
         });
     };
+    GoalService.getByIds = function (customerId, goalIds, active) {
+        return goal_entity_1.GoalDataService.getByIds(customerId, goalIds, active);
+    };
     GoalService.getByCustomerId = function (customerId) {
         return goal_entity_1.GoalDataService.getByCustomerId(customerId);
     };
@@ -30,6 +33,14 @@ var GoalService = (function () {
             return new Promise(function (resolve, reject) {
                 return reject('Faltan datos');
             });
+        }
+        if (goal.semaphore) {
+            if (goal.semaphore.redUntil > 1) {
+                goal.semaphore.redUntil = (goal.semaphore.redUntil / 100) || 0;
+            }
+            if (goal.semaphore.yellowUntil > 1) {
+                goal.semaphore.yellowUntil = (goal.semaphore.yellowUntil / 100) || 0;
+            }
         }
         // a goal is active if at least has one active indicator
         if (goal.indicators && goal.indicators.length) {
@@ -47,6 +58,14 @@ var GoalService = (function () {
         if (goal.indicators && goal.indicators.length) {
             goal.active = !!_.filter(goal.indicators, _.matchesProperty('active', true)).length;
         }
+        if (goal.semaphore) {
+            if (goal.semaphore.redUntil > 1) {
+                goal.semaphore.redUntil = (goal.semaphore.redUntil / 100) || 0;
+            }
+            if (goal.semaphore.yellowUntil > 1) {
+                goal.semaphore.yellowUntil = (goal.semaphore.yellowUntil / 100) || 0;
+            }
+        }
         return goal_entity_1.GoalDataService.update(goal);
     };
     GoalService.delete = function (customerId, goalId) {
@@ -59,7 +78,7 @@ var GoalService = (function () {
             var promiseArray = [];
             for (var i = 0; i < indicators.length; i++) {
                 _.remove(indicators[i].goalIds, function (value) { value === goalId; });
-                promiseArray.push(indicator_service_1.IndicatorService.update(indicators[i]));
+                promiseArray.push(indicator_service_1.IndicatorService.update(customerId, indicators[i]));
             }
             return Promise.all(promiseArray)
                 .then(function onAllUpdates(updates) {

@@ -62,6 +62,12 @@ export class GoalCreateComponent implements OnInit, AfterViewInit{
     this.route.data
       .subscribe((data:any) => {
         this.goal = data.goal;  
+        if(this.goal.semaphore){
+          this.goal.semaphore = {
+            redUntil: this.goal.semaphore.redUntil *100,
+            yellowUntil: this.goal.semaphore.yellowUntil * 100
+          };
+        }
         this.perspectives = data.perspectives;
         this.removeGoalIndicatorsFromSystemIndicators(data.indicators);
      });

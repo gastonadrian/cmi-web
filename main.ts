@@ -41,8 +41,6 @@ let senecaWebConfig:any = {
 app.set('view engine', 'pug');
 app.set('views', './client/app');
 
-console.log( path.join(__dirname + '/../client/dist'));
-
 app.use(express.static( path.join(__dirname + '/../client/dist')));
 app.use(express.static(path.join(__dirname + '/../client/bower_components')));
 app.use(express.static(path.join(__dirname + '/../client/node_modules')));

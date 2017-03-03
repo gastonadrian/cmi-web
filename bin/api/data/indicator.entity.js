@@ -27,7 +27,34 @@ var IndicatorDataService = (function () {
             return collection;
         });
     };
-    IndicatorDataService.getAllByCustomerId = function (customerId) {
+    IndicatorDataService.getIndicatorsLastSync = function (indicatorIds) {
+        if (!indicatorIds.length) {
+            return new Promise(function (resolve, reject) {
+                resolve([]);
+            });
+        }
+        var aggregateParams = {
+            db: utils.getConnString(),
+            collection: 'indicators-data',
+            pipeline: [
+                {
+                    '$match': {
+                        'indicatorId': {
+                            '$in': indicatorIds
+                        }
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': '$indicatorId',
+                        'date': { '$max': '$date' }
+                    }
+                }
+            ]
+        };
+        return mongoControl.aggregate(aggregateParams);
+    };
+    IndicatorDataService.getAllByCustomerId = function (customerId, active) {
         var findParams = {
             db: utils.getConnString(),
             collection: 'indicators',
@@ -35,6 +62,9 @@ var IndicatorDataService = (function () {
                 customerId: customerId
             }
         };
+        if (active === false || active === true) {
+            findParams.query.active = active;
+        }
         return mongoControl.find(findParams);
     };
     /**
@@ -53,6 +83,8 @@ var IndicatorDataService = (function () {
         return mongoControl.getById(findParams);
     };
     IndicatorDataService.insertIndicator = function (indicator) {
+        // is active as long as it has a datasource id assigned
+        indicator.active = !!indicator.datasource._id;
         var params = {
             db: utils.getConnString(),
             collection: 'indicators',
@@ -165,13 +197,15 @@ var IndicatorDataService = (function () {
                 customerId: customerId,
                 indicatorId: {
                     "$in": indicatorIds
-                },
-                date: {
-                    "$gte": from,
-                    "$lte": to
                 }
             }
         };
+        if (from && to) {
+            findParams.query.date = {
+                "$gte": from,
+                "$lte": to
+            };
+        }
         return mongoControl.find(findParams);
     };
     IndicatorDataService.insertIndicatorData = function (indicatorDataArray) {
@@ -182,13 +216,14 @@ var IndicatorDataService = (function () {
         };
         return mongoControl.insert(params);
     };
-    IndicatorDataService.updateIndicatorData = function (customerId, indicatorId, expected) {
+    IndicatorDataService.updateIndicatorData = function (customerId, indicatorId, date, expected) {
         var params = {
             db: utils.getConnString(),
             collection: 'indicators-data',
             query: {
                 customerId: customerId,
-                indicatorId: indicatorId
+                indicatorId: indicatorId,
+                date: date
             },
             update: {
                 expected: expected

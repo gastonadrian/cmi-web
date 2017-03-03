@@ -26,6 +26,10 @@ module.exports = function api(options) {
         }
     });
 
+    this.add('role:api,path:indicatorsgetsync', function(msg, respond){
+        this.act('role:indicators,cmd:getallsync', msg, respond);
+    });
+
     this.add('role:api,path:indicatorsgetall', function (msg, respond) {
         this.act('role:indicators,cmd:getall', msg, respond);
     });
@@ -48,6 +52,14 @@ module.exports = function api(options) {
 
     this.add('role:api,path:indicatorexpectation', function (msg, respond) {
         this.act('role:indicators,cmd:setquarter', msg, respond);
+    }); 
+
+    this.add('role:api,path:indicatorsdatagetall', function (msg, respond) {
+        this.act('role:indicators,cmd:getallindicatordata', msg, respond);
+    }); 
+    
+    this.add('role:api,path:updateindicatordata', function (msg, respond) {
+        this.act('role:indicators,cmd:updateindicatordata', msg, respond);
     }); 
 
     this.add('role:api,path:indicatorsdatasource', function (msg, respond) {

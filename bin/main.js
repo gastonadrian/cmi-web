@@ -30,7 +30,6 @@ var senecaWebConfig = {
 // specify the views directory
 app.set('view engine', 'pug');
 app.set('views', './client/app');
-console.log(path.join(__dirname + '/../client/dist'));
 app.use(express.static(path.join(__dirname + '/../client/dist')));
 app.use(express.static(path.join(__dirname + '/../client/bower_components')));
 app.use(express.static(path.join(__dirname + '/../client/node_modules')));
@@ -121,9 +120,6 @@ app.get('/login', function (req, res) {
 app.get('/logout', function (req, res) {
     req.logout();
     res.redirect('/');
-});
-app.get('/_ah/health', function (req, res) {
-    res.send({ ok: true });
 });
 // 404 catch 
 app.all('*', require('connect-ensure-login').ensureLoggedIn(), function (req, res) {

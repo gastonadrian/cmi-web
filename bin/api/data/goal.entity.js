@@ -13,6 +13,30 @@ var GoalDataService = (function () {
         };
         return mongoControl.getById(findParams);
     };
+    GoalDataService.getByIds = function (customerId, goalIds, active) {
+        var findParams = {
+            db: utils.getConnString(),
+            collection: 'goals',
+        }, mongoIds;
+        if (!goalIds.length) {
+            return new Promise(function ok(resolve, reject) {
+                return reject('no hay datos');
+            });
+        }
+        for (var i = 0; i < goalIds.length; i++) {
+            mongoIds.push(new mongodb_1.ObjectID(goalIds[i]));
+        }
+        findParams.query = {
+            "_id": {
+                "$in": mongoIds
+            },
+            "customerId": customerId
+        };
+        if (active === true || active === false) {
+            findParams.query.active = active;
+        }
+        return mongoControl.find(findParams);
+    };
     GoalDataService.getByCustomerId = function (customerId, active) {
         var findParams = {
             db: utils.getConnString(),

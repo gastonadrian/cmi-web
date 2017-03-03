@@ -6,3 +6,4 @@ export * from './data-period-service';
 export * from './window-ref-service';
 export * from './user-service';
 export * from './auth-guard.service';
+export * from './indicator-data.service';

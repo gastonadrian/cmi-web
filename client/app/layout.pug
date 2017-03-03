@@ -22,8 +22,8 @@ html
     block styles
 
     title=title
-
-  <body class="hold-transition skin-red sidebar-mini sidebar-collapse">
+  //- sidebar-collapse
+  <body class="hold-transition skin-red sidebar-mini ">
     <div class="wrapper">
 
       <!-- Main Header -->
@@ -127,6 +127,7 @@ html
             <li class="header">Menu</li>
             <!-- Optionally, you can add icons to the links -->
             <li class="active"><a href="/dashboard"><i class="fa fa-tachometer"></i> <span>Cuadro de Mando</span></a></li>
+            <li><a href="/perspectives"><i class="fa fa-tasks"></i> <span>Perspectivas</span></a></li>
             <li class="treeview">
               <a href="#"><i class="fa  fa-check-circle-o"></i> <span>Objetivos</span>
                 <span class="pull-right-container">
@@ -134,7 +135,6 @@ html
                 </span>
               </a>
               <ul class="treeview-menu">
-                <li><a href="/goals/create">Crear</a></li>
                 <li><a href="/perspectives">Listado</a></li>
               </ul>
             </li>
@@ -147,10 +147,10 @@ html
               <ul class="treeview-menu">
                 <li><a href="/indicators/create">Crear</a></li>
                 <li><a href="/indicators/list">Listado</a></li>
+                //- <li><a href="/indicators/expected">Ingresar esperados</a></li>
               </ul>
             </li>
-            <li><a href="/perspectives"><i class="fa fa-tasks"></i> <span>Perspectivas</span></a></li>
-            <li><a href="/configs"><i class="fa fa-sliders"></i> <span>Configuraciones</span></a></li>
+            //- <li><a href="/configs"><i class="fa fa-sliders"></i> <span>Configuraciones</span></a></li>
 
             if admin
               li.treeview
@@ -182,10 +182,10 @@ html
       <footer class="main-footer">
         <!-- To the right -->
         <div class="pull-right hidden-xs">
-          <p>Alpha 0.0.1</p> 
+          <p>Beta 0.1.0</p> 
         </div>
         <!-- Default to the left -->
-        <strong>Copyright &copy; 2016 <a href="#">CMI: Balanced Scorecard</a>.</strong> All rights reserved.
+        <strong>Copyright &copy; 2016 <a href="#">CMI: Balanced Scorecard</a>.</strong> Todos los derechos reservados.
       </footer>
     </div>
     <!-- ./wrapper -->

@@ -81,6 +81,12 @@ var routes = {
                     fail: '/login'
                 }
             },
+            indicatorsgetsync: {
+                GET: true,
+                secure: {
+                    fail: '/login'
+                }
+            },
             datasources: {
                 POST: true,
                 GET: true,
@@ -90,6 +96,20 @@ var routes = {
             },
             indicatorsdata: {
                 POST: true,
+                secure: {
+                    fail: '/login'
+                }
+            },
+            indicatorsdatagetall: {
+                GET: true,
+                suffix: '/:indicatorId',
+                secure: {
+                    fail: '/login'
+                }
+            },
+            updateindicatordata: {
+                POST: true,
+                suffix: '/:indicatorId',
                 secure: {
                     fail: '/login'
                 }

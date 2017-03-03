@@ -80,6 +80,14 @@ export class IndicatorCreateComponent implements OnInit, AfterViewInit{
           this.indicator.datasource = this.emptyDataSource;
       
         }
+
+        if(this.indicator.semaphore){
+          this.indicator.semaphore = {
+            redUntil: this.indicator.semaphore.redUntil *100,
+            yellowUntil: this.indicator.semaphore.yellowUntil * 100
+          };
+        }
+
      });  
   }
   

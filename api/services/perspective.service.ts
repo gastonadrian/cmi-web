@@ -51,8 +51,18 @@ export class PerspectiveService{
     static save(customerId:string, perspectives:Array<PerspectiveApiResult>):Promise<any[]>{
         var perspectiveArray:Array<Promise<any>> = [];
         for(var i=0; i < perspectives.length; i++){
+            if(perspectives[i].semaphore){
+                if(perspectives[i].semaphore.redUntil > 1){
+                    perspectives[i].semaphore.redUntil = (perspectives[i].semaphore.redUntil /100) || 0;
+                }
+    
+                if(perspectives[i].semaphore.yellowUntil > 1){
+                    perspectives[i].semaphore.yellowUntil = (perspectives[i].semaphore.yellowUntil / 100) || 0;
+                }
+            }
             perspectiveArray.push(PerspectiveDataService.update(perspectives[i]));
         }
+        
         return Promise.all(perspectiveArray);
     }
 

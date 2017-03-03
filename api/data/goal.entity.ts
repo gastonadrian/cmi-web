@@ -17,6 +17,38 @@ export class GoalDataService{
         
         return mongoControl.getById(findParams);
     }
+
+    static getByIds(customerId:string, goalIds:string[], active?:Boolean):Promise<MongoGoal>{
+        let findParams:any = {
+            db: utils.getConnString(),
+            collection: 'goals',
+        },
+        mongoIds:ObjectID[];
+
+        if(!goalIds.length){
+            return new Promise(function ok(resolve, reject){
+                return reject('no hay datos');
+            });
+        }
+
+        for(var i=0; i < goalIds.length; i++){
+            mongoIds.push(new ObjectID(goalIds[i]));
+        }
+
+        findParams.query = {
+            "_id": {
+                "$in":mongoIds
+            },
+            "customerId": customerId
+        };
+
+        if(active === true || active === false){
+            findParams.query.active = active;
+        }
+        
+        return mongoControl.find(findParams);
+    }    
+
     static getByCustomerId(customerId:string, active?:Boolean):Promise<Array<MongoGoal>>{
 
         let findParams:any = {
@@ -33,7 +65,6 @@ export class GoalDataService{
         
         return mongoControl.find(findParams);
     }
-
     static insertGoal(goal:MongoGoal):Promise<any>{
         let params:any = {
             db: utils.getConnString(),

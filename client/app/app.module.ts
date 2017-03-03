@@ -9,7 +9,7 @@ import { LineChartComponent } from './line-chart/line-chart';
 import { GaugeChartComponent } from './gauge-chart/gauge-chart';
 import { HttpModule } from '@angular/http';
 
-import { GoalService, IndicatorService, PerspectiveService, DashboardService, DataPeriodService, WindowRef, UserService, AuthGuard } from './shared/services/';
+import { GoalService, IndicatorService, PerspectiveService, DashboardService, DataPeriodService, WindowRef, UserService, AuthGuard, IndicatorDataService } from './shared/services/';
 
 import { DashboardComponent } from './dashboard/dashboard';
 import { DashboardPerspectiveComponent } from './dashboard/dashboard-perspective.component';
@@ -22,6 +22,8 @@ import { PerspectiveComponent } from './perspective/perspective.component';
 import { UserCreateComponent } from './user/user-create.component';
 import { IndicatorListComponent } from './indicator/indicator-list.component';
 import { UserListComponent } from './user/user-list.component';
+import { IndicatorExpectedComponent } from './indicator/indicator-expected.component';
+
 
 import { GoalResolver } from './shared/services/goal-route-resolver';
 import { IndicatorGridResolver } from './shared/services/indicator-grid-route-resolver';
@@ -30,6 +32,7 @@ import { PerspectiveResolver } from './shared/services/perspective-resolver';
 import { IndicatorResolver } from './shared/services/indicator-resolver';
 import { IndicatorEditResolver } from './shared/services/indicator-edit-resolver';
 import { UserListResolver } from './shared/services/user-list-resolver';
+import { IndicatorDataResolver } from './shared/services/indicator-data-resolver';
 
 const appRoutes: Routes = [
   { 
@@ -97,7 +100,19 @@ const appRoutes: Routes = [
     resolve:{
       indicators: IndicatorResolver
     }
-  },    
+  }, 
+  { 
+    path: 'indicators/expected/:indicatorid', 
+    component: IndicatorExpectedComponent,
+    data:{
+      title:'Indicadores',
+      description:'Ingresar valores esperados',
+      showPeriods:false      
+    },
+    resolve:{
+      indicatorsdata: IndicatorDataResolver
+    }
+  },      
   { 
     path: 'semaphore/configure', 
     component: SemaphoreComponent,
@@ -175,7 +190,8 @@ const appRoutes: Routes = [
     DashboardPerspectiveComponent,
     UserCreateComponent,
     IndicatorListComponent,
-    UserListComponent
+    UserListComponent,
+    IndicatorExpectedComponent    
   ],
   imports: [
     BrowserModule,
@@ -199,7 +215,9 @@ const appRoutes: Routes = [
     PerspectiveResolver,
     IndicatorResolver,
     IndicatorEditResolver,
-    UserListResolver
+    UserListResolver,
+    IndicatorDataResolver,
+    IndicatorDataService
   ],
   bootstrap: [AppComponent]
 })

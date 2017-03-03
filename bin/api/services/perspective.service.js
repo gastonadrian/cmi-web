@@ -39,6 +39,14 @@ var PerspectiveService = (function () {
     PerspectiveService.save = function (customerId, perspectives) {
         var perspectiveArray = [];
         for (var i = 0; i < perspectives.length; i++) {
+            if (perspectives[i].semaphore) {
+                if (perspectives[i].semaphore.redUntil > 1) {
+                    perspectives[i].semaphore.redUntil = (perspectives[i].semaphore.redUntil / 100) || 0;
+                }
+                if (perspectives[i].semaphore.yellowUntil > 1) {
+                    perspectives[i].semaphore.yellowUntil = (perspectives[i].semaphore.yellowUntil / 100) || 0;
+                }
+            }
             perspectiveArray.push(perspective_entity_1.PerspectiveDataService.update(perspectives[i]));
         }
         return Promise.all(perspectiveArray);

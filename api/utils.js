@@ -77,10 +77,10 @@ module.exports = function utils(){
             dataPeriods = getDataPeriods();
 
         // determinando cual es el periodo de tiempo que solicitaremos
-        if(!moment(to).isValid() || !moment(from).isValid()){
+        if(!(to && from  && moment(to).isValid() && moment(from).isValid())) {
             periodLegend = 'currentYear';
-            to = moment(dataPeriods[periodLegend].to).format('YYYYMMDD');
-            from = moment(dataPeriods[periodLegend].from).format('YYYYMMDD');
+            to = moment(dataPeriods[periodLegend].end).format('YYYYMMDD');
+            from = moment(dataPeriods[periodLegend].start).format('YYYYMMDD');
         }
 
         to = new Date(moment(to).toISOString());

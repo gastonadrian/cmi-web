@@ -38,6 +38,10 @@ export class GoalService {
         });
     }
 
+    static getByIds(customerId:string, goalIds:string[], active?:Boolean):Promise<any>{
+        return GoalDataService.getByIds(customerId, goalIds, active);
+    }
+
     static getByCustomerId(customerId:string):Promise<Array<GoalApiResult>>{
         return GoalDataService.getByCustomerId(customerId);
     }
@@ -51,6 +55,18 @@ export class GoalService {
                 return reject('Faltan datos');
             });
         }
+
+
+        if(goal.semaphore){
+            if(goal.semaphore.redUntil > 1){
+                goal.semaphore.redUntil = (goal.semaphore.redUntil /100) || 0;
+            }
+
+            if(goal.semaphore.yellowUntil > 1){
+                goal.semaphore.yellowUntil = (goal.semaphore.yellowUntil / 100) || 0;
+            }
+        }
+                
 
         // a goal is active if at least has one active indicator
         if(goal.indicators  && goal.indicators.length){
@@ -72,6 +88,16 @@ export class GoalService {
             goal.active = !!_.filter(goal.indicators, _.matchesProperty('active', true)).length;
         }
 
+        if(goal.semaphore){
+            if(goal.semaphore.redUntil > 1){
+                goal.semaphore.redUntil = (goal.semaphore.redUntil /100) || 0;
+            }
+
+            if(goal.semaphore.yellowUntil > 1){
+                goal.semaphore.yellowUntil = (goal.semaphore.yellowUntil / 100) || 0;
+            }
+        }        
+
         return GoalDataService.update(goal);
     }
 
@@ -86,7 +112,7 @@ export class GoalService {
 
             for(var i=0; i < indicators.length; i++){
                 _.remove(indicators[i].goalIds, (value:string) => { value === goalId });
-                promiseArray.push(IndicatorService.update(indicators[i]));
+                promiseArray.push(IndicatorService.update(customerId, indicators[i]));
             }
 
             return Promise.all(promiseArray)
@@ -145,7 +171,6 @@ export class GoalService {
             });
         });
     }
-
     private static calculateGoalPerformance(goal:MongoGoal, indicators:Array<IndicatorApiResult>, indicatorFactors:Array<MongoGoalIndicator>):IPerformance{
         let unitPercentage:number = 1 / _.sumBy(indicatorFactors, 'factor');
         let result:IPerformance = {

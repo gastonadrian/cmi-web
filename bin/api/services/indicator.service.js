@@ -3,15 +3,32 @@ var _ = require("lodash");
 var moment = require("moment");
 var indicator_entity_1 = require("./../data/indicator.entity");
 var shared_1 = require("./../models/shared");
-var indicator_data_1 = require("./../models/mongo/indicator-data");
+var goal_service_1 = require("./goal.service");
 var IndicatorService = (function () {
     function IndicatorService() {
     }
     IndicatorService.get = function (customerId, indicatorId) {
         return indicator_entity_1.IndicatorDataService.get(customerId, indicatorId);
     };
-    IndicatorService.getAll = function (customerId) {
-        return indicator_entity_1.IndicatorDataService.getAllByCustomerId(customerId);
+    IndicatorService.getAll = function (customerId, active) {
+        return indicator_entity_1.IndicatorDataService.getAllByCustomerId(customerId, active);
+    };
+    IndicatorService.getAllSync = function (customerId) {
+        return indicator_entity_1.IndicatorDataService.getAllByCustomerId(customerId, true)
+            .then(function onGetAll(indicators) {
+            var ids = indicators.map(function mapIndicatorId(ind) {
+                return ind._id.toString();
+            });
+            // obtain all the data-indicator grouped by date
+            return indicator_entity_1.IndicatorDataService.getIndicatorsLastSync(ids)
+                .then(function (indicatorsData) {
+                for (var i = 0; i < indicatorsData.length; i++) {
+                    var index = _.findIndex(indicators, function mapId(value) { return value._id.toString() === indicatorsData[i]._id; });
+                    indicators[index].lastDateSynced = indicatorsData[i].date;
+                }
+                return indicators;
+            });
+        });
     };
     IndicatorService.getGoalIndicators = function (customerId, goalIds) {
         return indicator_entity_1.IndicatorDataService.getGoalIndicators(customerId, goalIds);
@@ -58,16 +75,23 @@ var IndicatorService = (function () {
                 return reject('Faltan datos');
             });
         }
-        // is active as long as it has a datasource id assigned
-        indicator.active = !!indicator.datasource._id;
+        if (indicator.semaphore) {
+            if (indicator.semaphore.redUntil > 1) {
+                indicator.semaphore.redUntil = (indicator.semaphore.redUntil / 100) || 0;
+            }
+            if (indicator.semaphore.yellowUntil > 1) {
+                indicator.semaphore.yellowUntil = (indicator.semaphore.yellowUntil / 100) || 0;
+            }
+        }
         if (indicator._id && indicator._id.length) {
-            return indicator_entity_1.IndicatorDataService.updateIndicator(indicator);
+            return this.update(customerId, indicator);
         }
         else {
             return indicator_entity_1.IndicatorDataService.insertIndicator(indicator);
         }
     };
     IndicatorService.assignGoal = function (customerId, goalIndicator) {
+        var self = this;
         goalIndicator.customerId = customerId;
         return Promise.all([
             indicator_entity_1.IndicatorDataService.insertGoalIndicator(customerId, goalIndicator),
@@ -81,7 +105,7 @@ var IndicatorService = (function () {
                 }
                 // add the goal to "goalIds" property
                 indicator.goalIds.push(goalIndicator.goalId);
-                return indicator_entity_1.IndicatorDataService.updateIndicator(indicator)
+                return self.update(customerId, indicator)
                     .then(function onUpdateResponse(response) {
                     return { ok: response.ok && insertGoalIndicatorResult.ok };
                 });
@@ -90,6 +114,7 @@ var IndicatorService = (function () {
         });
     };
     IndicatorService.removeGoal = function (customerId, goalId, indicatorId) {
+        var self = this;
         return Promise.all([
             indicator_entity_1.IndicatorDataService.removeGoalIndicator(customerId, goalId, indicatorId),
             indicator_entity_1.IndicatorDataService.get(customerId, indicatorId)
@@ -99,32 +124,58 @@ var IndicatorService = (function () {
             _.remove(indicator.goalIds, function (id) {
                 return id == goalId;
             });
-            return indicator_entity_1.IndicatorDataService.updateIndicator(indicator)
+            return self.update(customerId, indicator)
                 .then(function onUpdateResponse(response) {
                 return { ok: response.ok && removeGoalIndicatorResult.ok };
             });
         });
     };
     IndicatorService.saveIndicatorDataSource = function (customerId, indicator) {
+        var self = this;
         return this.get(customerId, indicator._id.toString())
             .then(function onIndicatorGet(oldIndicator) {
             oldIndicator.datasource = indicator.datasource;
-            return indicator_entity_1.IndicatorDataService.updateIndicator(oldIndicator);
+            return self.update(customerId, oldIndicator);
         });
     };
-    IndicatorService.update = function (indicator) {
-        return indicator_entity_1.IndicatorDataService.updateIndicator(indicator);
-    };
     IndicatorService.createIndicatorData = function (customerId, indicatorData) {
-        indicatorData.customerId = customerId;
-        if (!(indicatorData.indicatorId
-            && indicatorData.value
-            && moment(indicatorData.date).isValid())) {
+        // guardamos el id
+        var indicatorId = indicatorData[0].indicatorId;
+        //validar array vacio
+        if (!indicatorData.length) {
             return new Promise(function (resolve, reject) {
-                return reject('Faltan datos');
+                return resolve({
+                    ok: false,
+                    why: 'Faltan datos'
+                });
             });
         }
-        return indicator_entity_1.IndicatorDataService.insertIndicatorData([indicatorData]);
+        // validar que todos los elementos del array tengan los datos seteados
+        for (var i = 0; i < indicatorData.length; i++) {
+            indicatorData[i].customerId = customerId;
+            indicatorData[i].date = moment(indicatorData[i].date).toDate();
+            // validar que todos los datos sean correctos
+            if (!(indicatorData[i].indicatorId
+                && indicatorData[i].value
+                && moment(indicatorData[i].date).isValid())) {
+                return new Promise(function (resolve, reject) {
+                    return resolve({
+                        ok: false,
+                        why: 'Faltan datos'
+                    });
+                });
+            }
+        }
+        return indicator_entity_1.IndicatorDataService.insertIndicatorData(indicatorData)
+            .then(function onSaveIndicators(response) {
+            return indicator_entity_1.IndicatorDataService.getIndicatorsLastSync([indicatorId])
+                .then(function (indicatorSyncs) {
+                return indicatorSyncs[0];
+            });
+        });
+    };
+    IndicatorService.getAllIndicatorData = function (customerId, indicatorId) {
+        return indicator_entity_1.IndicatorDataService.getIndicatorsData(customerId, [indicatorId]);
     };
     IndicatorService.setQuarterExpectation = function (customerId, indicatorId, quarter) {
         var startOfQuarter = moment(quarter.date).startOf('quarter').toDate();
@@ -148,7 +199,7 @@ var IndicatorService = (function () {
                 // update indicator data with expectation
                 var promiseArray = [];
                 for (var i = 0; i < indicatorsData.length; i++) {
-                    promiseArray.push(indicator_entity_1.IndicatorDataService.updateIndicatorData(customerId, indicatorId, quarter.value));
+                    promiseArray.push(indicator_entity_1.IndicatorDataService.updateIndicatorData(customerId, indicatorId, indicatorsData[i].date, quarter.value));
                 }
                 return Promise.all(promiseArray)
                     .then(function (values) {
@@ -169,11 +220,46 @@ var IndicatorService = (function () {
             });
         });
     };
+    IndicatorService.update = function (customerId, indicator) {
+        var currentActive = indicator.active, newActive = !!indicator.datasource._id;
+        if (currentActive != newActive && newActive) {
+            // get goals and update those to active                    
+            // we only want the active === false, to update those to active==true
+            goal_service_1.GoalService.getByIds(customerId, indicator.goalIds, false)
+                .then(function onGetByIds(goals) {
+                for (var i = 0; i < goals.length; i++) {
+                    goals[i].active = true;
+                    goal_service_1.GoalService.update(customerId, goals[i]);
+                }
+            });
+        }
+        // is active as long as it has a datasource id assigned
+        indicator.active = newActive;
+        if (indicator.semaphore) {
+            if (indicator.semaphore.redUntil > 1) {
+                indicator.semaphore.redUntil = (indicator.semaphore.redUntil / 100) || 0;
+            }
+            if (indicator.semaphore.yellowUntil > 1) {
+                indicator.semaphore.yellowUntil = (indicator.semaphore.yellowUntil / 100) || 0;
+            }
+        }
+        return indicator_entity_1.IndicatorDataService.updateIndicator(indicator);
+    };
+    IndicatorService.updateIndicatorData = function (customerId, indicatorId, expect) {
+        expect.date = moment(expect.date).toDate();
+        return indicator_entity_1.IndicatorDataService.updateIndicatorData(customerId, indicatorId, expect.date, expect.value);
+    };
     IndicatorService.createEmptyIndicatorData = function (customerId, indicatorId, expected, start, end) {
         var howManyMonths = moment.duration(moment(end).diff(moment(start))).asMonths();
         var result = [];
         for (var i = 0; i < howManyMonths; i++) {
-            result.push(new indicator_data_1.MongoIndicatorData(indicatorId, customerId, moment(start).add(i, 'month').endOf('month').toDate(), null, expected));
+            result.push({
+                indicatorId: indicatorId,
+                customerId: customerId,
+                date: moment(start).add(i, 'month').endOf('month').toDate(),
+                value: null,
+                expected: expected
+            });
         }
         return result;
     };
@@ -187,9 +273,11 @@ var IndicatorService = (function () {
      */
     IndicatorService.calculateIndicatorPerformance = function (indicator, indicatorData) {
         var result;
-        if (indicator.performanceComparison === shared_1.PerformanceComparisons.lessThan
-            && (indicator.datasource.columnOperation === shared_1.Operations.plus || indicator.datasource.columnOperation === shared_1.Operations.average)) {
+        if (indicator.performanceComparison === shared_1.PerformanceComparisons.lessThan) {
             result = this.calculateLessThanPerformance(indicator, indicatorData);
+        }
+        else {
+            result = this.calculateEqualsToPerformance(indicator, indicatorData);
         }
         return result;
     };
@@ -241,6 +329,46 @@ var IndicatorService = (function () {
         }
         onePercentValue = consolidateExpected / (100 - indicator.semaphore.yellowUntil * 100);
         performanceResult.value = 1 - (consolidateData / onePercentValue) / 100;
+        if (performanceResult.value < 0) {
+            performanceResult.value = 0;
+        }
+        if (consolidateData >= consolidateExpected) {
+            // red or yellow
+            if (performanceResult.value > indicator.semaphore.redUntil) {
+                performanceResult.semaphoreStatus = shared_1.SemaphoreStatus.yellow;
+            }
+            else {
+                performanceResult.semaphoreStatus = shared_1.SemaphoreStatus.red;
+            }
+        }
+        return performanceResult;
+    };
+    IndicatorService.calculateEqualsToPerformance = function (indicator, months) {
+        var consolidateData = 0;
+        var consolidateExpected = 0;
+        var onePercentValue = 0;
+        var performanceResult = {
+            semaphoreStatus: shared_1.SemaphoreStatus.green,
+            value: 0
+        };
+        if (!months.length) {
+            performanceResult.semaphoreStatus = shared_1.SemaphoreStatus.red;
+            performanceResult.value = 0;
+            return performanceResult;
+        }
+        // get the consolidates
+        for (var i = 0; i < months.length; i++) {
+            consolidateData += months[i].value;
+            consolidateExpected += months[i].expected;
+        }
+        if (indicator.datasource.columnOperation === shared_1.Operations.average) {
+            consolidateData = consolidateData / months.length;
+            consolidateExpected = consolidateExpected / months.length;
+        }
+        performanceResult.value = (consolidateData / consolidateExpected);
+        if (performanceResult.value > 1) {
+            performanceResult.value = 1;
+        }
         if (performanceResult.value < 0) {
             performanceResult.value = 0;
         }
