@@ -19,18 +19,17 @@ export class PerspectiveDataService{
     }
 
     static createBasePerspectives(customerId:string):Promise<any>{
-
-        let clientes:MongoPerspective =  {
+        var financiera:MongoPerspective = {
             "customerId" : customerId,
-            "title" : "Perspectiva Clientes",
+            "title" : "Perspectiva Financiera",
             "semaphore" : {
                 "redUntil" : 30,
                 "yellowUntil" : 59
             }
         } as MongoPerspective;
-        var aprendizaje:MongoPerspective = {
+        let clientes:MongoPerspective =  {
             "customerId" : customerId,
-            "title" : "Perspectiva de Aprendizaje",
+            "title" : "Perspectiva Clientes",
             "semaphore" : {
                 "redUntil" : 30,
                 "yellowUntil" : 59
@@ -44,15 +43,16 @@ export class PerspectiveDataService{
                 "yellowUntil" : 59
             }
         } as MongoPerspective;
-        var financiera:MongoPerspective = {
+        var aprendizaje:MongoPerspective = {
             "customerId" : customerId,
-            "title" : "Perspectiva Financiera",
+            "title" : "Perspectiva de Aprendizaje",
             "semaphore" : {
                 "redUntil" : 30,
                 "yellowUntil" : 59
             }
         } as MongoPerspective;
-        return this.insertPerspectives([clientes,aprendizaje,procesos,financiera]);
+
+        return this.insertPerspectives([financiera,clientes,procesos,aprendizaje]);
     }
 
     static insertPerspectives(perspectives:Array<MongoPerspective>):Promise<any>{
