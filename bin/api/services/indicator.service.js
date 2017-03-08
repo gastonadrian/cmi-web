@@ -186,7 +186,6 @@ var IndicatorService = (function () {
             indicatorData[i].date = moment(indicatorData[i].date).toDate();
             // validar que todos los datos sean correctos
             if (!(indicatorData[i].indicatorId
-                && indicatorData[i].value !== null
                 && moment(indicatorData[i].date).isValid())) {
                 return new Promise(function (resolve, reject) {
                     return resolve({
@@ -204,6 +203,9 @@ var IndicatorService = (function () {
             for (var i = 0; i < dates.length; i++) {
                 var oldIndicator = _.find(response, _.matchesProperty('date', dates[i]));
                 var newIndicator = _.find(indicatorData, _.matchesProperty('date', dates[i]));
+                if (newIndicator.value === null) {
+                    continue;
+                }
                 if (oldIndicator) {
                     // must UPDATE on the db
                     oldIndicator.value = newIndicator.value;

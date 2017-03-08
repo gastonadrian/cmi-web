@@ -252,7 +252,6 @@ export class IndicatorService{
 
             // validar que todos los datos sean correctos
             if(!(indicatorData[i].indicatorId
-            && indicatorData[i].value !== null
             && moment(indicatorData[i].date).isValid())){
                 return new Promise(function(resolve, reject){
                     return resolve({
@@ -271,8 +270,13 @@ export class IndicatorService{
         return IndicatorDataService.getIndicatorDataDates(customerId, indicatorId, dates)
             .then(function onGetDates(response:Array<MongoIndicatorData>){
                 for(var i =0; i < dates.length; i++){
+
                     let oldIndicator:MongoIndicatorData = _.find(response, _.matchesProperty('date', dates[i]));
                     let newIndicator:MongoIndicatorData = _.find(indicatorData, _.matchesProperty('date', dates[i]));
+
+                    if(newIndicator.value === null){
+                        continue;
+                    }
 
                     if(oldIndicator){
                         // must UPDATE on the db
