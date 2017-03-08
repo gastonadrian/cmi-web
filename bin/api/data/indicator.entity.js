@@ -297,17 +297,29 @@ var IndicatorDataService = (function () {
         }
         return mongoControl.find(findParams);
     };
-    IndicatorDataService.removePerformance = function (indicatorId, inBetween) {
+    IndicatorDataService.removeCachedPerformance = function (indicatorId, from, to) {
         // delete goal-indicator relations
         var goalIndicatorParams = {
             db: utils.getConnString(),
             collection: 'indicator-performance',
             query: {
-                indicatorId: indicatorId,
-                from: { '$lte': inBetween },
-                to: { '$gte': inBetween }
+                indicatorId: indicatorId.toString()
             }
         };
+        if (from && to) {
+            goalIndicatorParams.query["$or"] = [
+                {
+                    from: { '$gte': from },
+                    to: { '$lte': to }
+                },
+                {
+                    from: { '$gte': from }
+                },
+                {
+                    to: { '$lte': to }
+                }
+            ];
+        }
         return mongoControl.remove(goalIndicatorParams)
             .then(function (response) {
             return response.result;

@@ -162,18 +162,31 @@ export class GoalDataService{
     }
 
 
-    static removePerformance(goalId:string, inBetween:Date):Promise<any>{
-        let goalIndicatorParams:any = {
+    static removePerformance(goalId:string, from?:Date, to?:Date):Promise<any>{
+        let removePerformanceParams:any = {
             db: utils.getConnString(),
             collection: 'goal-performance',
             query: {
-                goalId:goalId,
-                from:{ '$lte': inBetween },
-                to: { '$gte': inBetween }
+                goalId:goalId
             }
         };
 
-        return mongoControl.remove(goalIndicatorParams)
+        if(from && to){
+            removePerformanceParams.query["$or"] = [
+                {
+                    from: { '$gte': from },
+                    to: { '$lte': to }                    
+                },
+                {
+                    from: { '$gte': from }
+                },
+                {
+                    to: { '$lte': to }
+                }
+            ];
+        }
+
+        return mongoControl.remove(removePerformanceParams)
             .then(function(response:any){
                 return response.result;
             });        

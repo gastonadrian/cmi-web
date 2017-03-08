@@ -13,7 +13,7 @@ module.exports = function indicatorApi(){
 
      this.add('role:indicators,cmd:assigngoal', assignGoal);
      this.add('role:indicators,cmd:removegoal', removeGoal);
-     this.add('role:indicators,cmd:setquarter', setQuarterExpectation);
+    //  this.add('role:indicators,cmd:setquarter', setQuarterExpectation);
 
     function saveIndicator(msg, respond){
         indicatorService.saveIndicator(msg.args.params.customerId, msg.args.body)

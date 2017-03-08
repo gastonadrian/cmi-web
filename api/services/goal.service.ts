@@ -102,7 +102,12 @@ export class GoalService {
             }
         }        
 
+        GoalDataService.removePerformance(goal._id);
         return GoalDataService.update(goal);
+    }
+
+    static removeCachedPerformance(goalId:string, from?:Date, to?:Date){
+        return GoalDataService.removePerformance(goalId, from, to);
     }
 
     static delete(customerId:string, goalId:string):Promise<any>{

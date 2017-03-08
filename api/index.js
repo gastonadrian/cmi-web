@@ -50,9 +50,9 @@ module.exports = function api(options) {
         this.act('role:indicators,cmd:removegoal', msg, respond);
     });
 
-    this.add('role:api,path:indicatorexpectation', function (msg, respond) {
-        this.act('role:indicators,cmd:setquarter', msg, respond);
-    }); 
+    // this.add('role:api,path:indicatorexpectation', function (msg, respond) {
+    //     this.act('role:indicators,cmd:setquarter', msg, respond);
+    // }); 
 
     this.add('role:api,path:indicatorsdatagetall', function (msg, respond) {
         this.act('role:indicators,cmd:getallindicatordata', msg, respond);

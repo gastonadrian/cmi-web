@@ -356,17 +356,30 @@ export class IndicatorDataService{
         return mongoControl.find(findParams);
     }
     
-    static removePerformance(indicatorId:string, inBetween:Date):Promise<any>{
+    static removeCachedPerformance(indicatorId:string, from?:Date, to?:Date):Promise<any>{
         // delete goal-indicator relations
         let goalIndicatorParams:any = {
             db: utils.getConnString(),
             collection: 'indicator-performance',
             query: {
-                indicatorId:indicatorId,
-                from:{ '$lte': inBetween },
-                to: { '$gte': inBetween }
+                indicatorId:indicatorId.toString()
             }
         };
+
+        if(from && to){
+            goalIndicatorParams.query["$or"] = [
+                {
+                    from: { '$gte': from },
+                    to: { '$lte': to }                    
+                },
+                {
+                    from: { '$gte': from }
+                },
+                {
+                    to: { '$lte': to }
+                }
+            ]
+        }
 
         return mongoControl.remove(goalIndicatorParams)
             .then(function(response:any){

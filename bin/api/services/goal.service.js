@@ -68,7 +68,11 @@ var GoalService = (function () {
                 goal.semaphore.yellowUntil = (goal.semaphore.yellowUntil / 100) || 0;
             }
         }
+        goal_entity_1.GoalDataService.removePerformance(goal._id);
         return goal_entity_1.GoalDataService.update(goal);
+    };
+    GoalService.removeCachedPerformance = function (goalId, from, to) {
+        return goal_entity_1.GoalDataService.removePerformance(goalId, from, to);
     };
     GoalService.delete = function (customerId, goalId) {
         return Promise.all([

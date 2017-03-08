@@ -82,13 +82,13 @@ var routes={
                     fail: '/login'
                 }                                
             },
-            indicatorexpectation:{
-                POST:true,
-                suffix: '/:indicatorId',
-                secure:{
-                    fail: '/login'
-                }
-            },
+            // indicatorexpectation:{
+            //     POST:true,
+            //     suffix: '/:indicatorId',
+            //     secure:{
+            //         fail: '/login'
+            //     }
+            // },
             indicatorsgetsync:{
                 GET:true,
                 secure:{

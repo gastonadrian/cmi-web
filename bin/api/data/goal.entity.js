@@ -135,17 +135,19 @@ var GoalDataService = (function () {
         }
         return mongoControl.find(findParams);
     };
-    GoalDataService.removePerformance = function (goalId, inBetween) {
-        var goalIndicatorParams = {
+    GoalDataService.removePerformance = function (goalId, from, to) {
+        var removePerformanceParams = {
             db: utils.getConnString(),
             collection: 'goal-performance',
             query: {
-                goalId: goalId,
-                from: { '$lte': inBetween },
-                to: { '$gte': inBetween }
+                goalId: goalId
             }
         };
-        return mongoControl.remove(goalIndicatorParams)
+        if (from && to) {
+            removePerformanceParams.query.from = { '$gte': from };
+            removePerformanceParams.query.to = { '$lte': to };
+        }
+        return mongoControl.remove(removePerformanceParams)
             .then(function (response) {
             return response.result;
         });
