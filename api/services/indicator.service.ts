@@ -235,8 +235,6 @@ export class IndicatorService{
     }
 
     static createIndicatorData(customerId:string, indicatorData:Array<MongoIndicatorData>):Promise<any>{
-        // guardamos el id
-        let indicatorId = indicatorData[0].indicatorId;
 
         //validar array vacio
         if(!indicatorData.length){
@@ -247,6 +245,10 @@ export class IndicatorService{
                 });
             });            
         }
+
+        // guardamos el id
+        let indicatorId = indicatorData[0].indicatorId;
+
 
         return IndicatorDataService.get(customerId, indicatorId)
         .then(function onIndicator(indicator:MongoIndicator){
