@@ -189,7 +189,7 @@ var IndicatorDataService = (function () {
      * @param {any} to
      * @returns
      */
-    IndicatorDataService.getIndicatorsData = function (customerId, indicatorIds, from, to) {
+    IndicatorDataService.getIndicatorsDataBetween = function (customerId, indicatorIds, from, to) {
         var findParams = {
             db: utils.getConnString(),
             collection: 'indicators-data',
@@ -198,6 +198,9 @@ var IndicatorDataService = (function () {
                 indicatorId: {
                     "$in": indicatorIds
                 }
+            },
+            sortBy: {
+                "date": 1
             }
         };
         if (from && to) {
@@ -206,6 +209,20 @@ var IndicatorDataService = (function () {
                 "$lte": to
             };
         }
+        return mongoControl.find(findParams);
+    };
+    IndicatorDataService.getIndicatorDataDates = function (customerId, indicatorId, dates) {
+        var findParams = {
+            db: utils.getConnString(),
+            collection: 'indicators-data',
+            query: {
+                customerId: customerId,
+                indicatorId: indicatorId,
+                date: {
+                    "$in": dates
+                }
+            }
+        };
         return mongoControl.find(findParams);
     };
     IndicatorDataService.insertIndicatorData = function (indicatorDataArray) {
@@ -230,6 +247,68 @@ var IndicatorDataService = (function () {
             }
         };
         return mongoControl.update(params)
+            .then(function (response) {
+            return response.result;
+        });
+    };
+    IndicatorDataService.updateIndicatorDataValue = function (customerId, indicatorData) {
+        var params = {
+            db: utils.getConnString(),
+            collection: 'indicators-data',
+            id: indicatorData._id,
+            update: {
+                value: indicatorData.value
+            }
+        };
+        return mongoControl.updateById(params)
+            .then(function (response) {
+            return response.result;
+        });
+    };
+    IndicatorDataService.insertPerformance = function (indicatorPerformance) {
+        var params = {
+            db: utils.getConnString(),
+            collection: 'indicator-performance',
+            data: [indicatorPerformance]
+        };
+        return mongoControl.insert(params)
+            .then(function (response) {
+            return {
+                id: response.insertedIds.pop().toString()
+            };
+        });
+    };
+    IndicatorDataService.getPerformance = function (indicatorIds, from, to) {
+        var findParams = {
+            db: utils.getConnString(),
+            collection: 'indicator-performance',
+            query: {
+                indicatorId: {
+                    "$in": indicatorIds
+                }
+            },
+            sortBy: {
+                "to": -1
+            }
+        };
+        if (from && to) {
+            findParams.query.from = from;
+            findParams.query.to = to;
+        }
+        return mongoControl.find(findParams);
+    };
+    IndicatorDataService.removePerformance = function (indicatorId, inBetween) {
+        // delete goal-indicator relations
+        var goalIndicatorParams = {
+            db: utils.getConnString(),
+            collection: 'indicator-performance',
+            query: {
+                indicatorId: indicatorId,
+                from: { '$lte': inBetween },
+                to: { '$gte': inBetween }
+            }
+        };
+        return mongoControl.remove(goalIndicatorParams)
             .then(function (response) {
             return response.result;
         });

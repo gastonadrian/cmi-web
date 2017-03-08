@@ -10,6 +10,7 @@ module.exports = function indicatorApi(){
     this.add('role:indicators,cmd:getallindicatordata', getAllIndicatorData);
     this.add('role:indicators,cmd:updateindicatordata', updateIndicatorData);
 
+
      this.add('role:indicators,cmd:assigngoal', assignGoal);
      this.add('role:indicators,cmd:removegoal', removeGoal);
      this.add('role:indicators,cmd:setquarter', setQuarterExpectation);

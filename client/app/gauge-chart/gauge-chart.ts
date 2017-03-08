@@ -1,5 +1,6 @@
-import { Component, Input, ElementRef, AfterViewInit, ViewChild,  OnChanges } from '@angular/core';
+import { Component, Input, ElementRef, AfterViewInit, ViewChild, OnChanges } from '@angular/core';
 import { GaugeChartConfig } from '../shared/models/gauge-chart-config';
+import { Observable } from "rxjs/Observable";
 
 declare let d3:any;
 
@@ -9,9 +10,10 @@ declare let d3:any;
 })
 export class GaugeChartComponent implements OnChanges, AfterViewInit {
 
-    @Input() config: GaugeChartConfig;
+    @Input() observableConfig: Observable<GaugeChartConfig>;
     @ViewChild('container') element: ElementRef;
 
+    private config:GaugeChartConfig; 
     private host:any;
     private chart:any;
 
@@ -34,28 +36,28 @@ export class GaugeChartComponent implements OnChanges, AfterViewInit {
      * We request angular for the element reference 
     * and then we create a D3 Wrapper for our host element
     **/
-    constructor() {}
-    
-    ngAfterViewInit() {
-        this.host = d3.select(this.element.nativeElement);
-        // console.log('after view init');
-        this.setup();
-        this.buildSVG();
-        
-        if(this.config.percent){
-          this.render();
-        }
+    constructor() {
+      
     }
     
-    /**
-     * Everythime the @Input is updated, we rebuild the chart
-    **/
-    ngOnChanges(changes: any): void {
-      // console.log(this.config.percent);
-        if (!this.config.percent || !this.host){
-            return;
-        }
-        this.render();
+    ngAfterViewInit() {
+      this.host = d3.select(this.element.nativeElement);
+      this.setup();
+      this.buildSVG();
+
+      if(this.config && this.config.percent){
+          this.render();        
+      }
+    }
+
+    ngOnChanges(changes:any){
+      this.observableConfig.subscribe(
+        (config:GaugeChartConfig) => {
+          this.config = config;
+          if(this.config && this.config.percent && this.host){
+            this.render();
+          }
+      });  
     }
 
     private setup(){
@@ -91,7 +93,13 @@ export class GaugeChartComponent implements OnChanges, AfterViewInit {
       
       // Add layer for the panel
       this.chart = svg.append('g').attr('transform', "translate(" + ((this.width + this.margin.left) / 2) + ", " + ((this.height + this.margin.top) / 2) + ")");
-      this.chart.append('path').attr('class', 'arc chart-filled ' + this.config.status);
+
+      if(this.config){
+        this.chart.append('path').attr('class', 'arc chart-filled ' + this.config.status);
+      }
+      else{
+        this.chart.append('path').attr('class', 'arc chart-filled');        
+      }
       this.chart.append('path').attr('class', "arc chart-empty");
       
       this.arc2 = d3.svg.arc().outerRadius(this.radius - this.chartInset).innerRadius(this.radius - this.chartInset - this.barWidth);
@@ -104,8 +112,8 @@ export class GaugeChartComponent implements OnChanges, AfterViewInit {
     private render(){
       let self:any = this;
       let oldValue:number = this.config.percent || 0;
-      // console.log('oldvalue', oldValue);
 
+      $('.arc.chart-filled').attr('class','arc chart-filled ' + this.config.status);
       // Reset pointer position
       this.chart.transition().delay(100).ease('quad').duration(200).select('.needle').tween('reset-progress', function() {
         return function(percentOfPercent:any) {

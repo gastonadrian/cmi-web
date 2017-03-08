@@ -25,6 +25,12 @@ export class GoalService {
             .map(this.mapGoal);
     }
 
+    getPerformance(goalId:number, from?:Date, to?:Date): Observable<GoalApiResult>{
+        return this.http
+            .get(`/api/goaldetailedperformance/${goalId}/${from}/${to}`, { headers: this.getHeaders()})
+            .map(this.mapGoal);
+    }
+
     private getHeaders(){
         let headers = new Headers();
         headers.append('Accept', 'application/json');

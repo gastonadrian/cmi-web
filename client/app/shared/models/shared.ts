@@ -23,7 +23,7 @@ export class AppSettings{
     public static admin: any = admin;
     public static dataPeriods:Array<any> = dataPeriods;
 
-    public static semaphoreStatusText:Array<string> = ['','green','yellow','red'];
+    public static semaphoreStatusText:Array<string> = ['','success','warning','danger'];
 
     public static DataTableLangConfig:any ={
         "sProcessing":     "Procesando...",

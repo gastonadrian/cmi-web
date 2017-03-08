@@ -83,7 +83,7 @@ export class PerspectiveService{
                 
                 result.push(_.extend(perspectives[index], {
                     goals: perspectiveGoals,
-                    performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals)
+                    performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals, to)
                 }) as PerspectiveApiResult);
             }
             return result;
@@ -91,14 +91,15 @@ export class PerspectiveService{
         });
     }
 
-    private static calculatePerspectivePerformance(perspective:MongoPerspective, goals:Array<GoalApiResult>):IPerformance{
+    private static calculatePerspectivePerformance(perspective:MongoPerspective, goals:Array<GoalApiResult>, to:Date):IPerformance{
         let result:IPerformance = {
             value: 1,
-            semaphoreStatus: SemaphoreStatus.red
+            semaphoreStatus: SemaphoreStatus.red,
+            date: to
         };
     
         // making sure that we consider cases where perspectives has no goals
-        result.value = _.sumBy(goals, 'performance.value')/goals.length || 0;
+        result.value = _.sumBy(goals, 'performance.periodPerformance.value')/goals.length || 0;
 
         if(result.value <= perspective.semaphore.yellowUntil){
             if(result.value <= perspective.semaphore.redUntil){

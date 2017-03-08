@@ -3,6 +3,7 @@ import * as utils from './../utils';
 import { ObjectID } from 'mongodb';
 
 import { MongoGoal } from './../models/mongo/goal.mongo';
+import { GoalPerformanceBase } from './../models/goal-performance.base';
 
 export class GoalDataService{
 
@@ -18,12 +19,12 @@ export class GoalDataService{
         return mongoControl.getById(findParams);
     }
 
-    static getByIds(customerId:string, goalIds:string[], active?:Boolean):Promise<MongoGoal>{
+    static getByIds(customerId:string, goalIds:string[], active?:Boolean):Promise<MongoGoal[]>{
         let findParams:any = {
             db: utils.getConnString(),
             collection: 'goals',
         },
-        mongoIds:ObjectID[];
+        mongoIds:ObjectID[] = [];
 
         if(!goalIds.length){
             return new Promise(function ok(resolve, reject){
@@ -78,7 +79,6 @@ export class GoalDataService{
                 };
             });        
     }
-
     static update(goal:MongoGoal):Promise<any>{
         let params:any = {
             db: utils.getConnString(),
@@ -121,4 +121,63 @@ export class GoalDataService{
                     });    
             });
     }
+
+    static insertGoalPerformance(goalPerformance:GoalPerformanceBase):Promise<any>{
+        let params:any = {
+            db: utils.getConnString(),
+            collection: 'goal-performance',
+            data: [goalPerformance]
+        };
+        return mongoControl.insert(params)
+            .then(function(response:any){
+                return {
+                    id: response.insertedIds.pop().toString()
+                };
+            });        
+    }
+
+    static getGoalPerformance(goalIds:Array<string>, from?:Date, to?:Date):Promise<Array<GoalPerformanceBase>>{
+        let findParams:any = {
+            db: utils.getConnString(),
+            collection: 'goal-performance',
+            query: {
+                goalId: {
+                    "$in":goalIds
+                }
+            },
+            sortBy:{
+                "to": -1
+            }
+        };
+
+        if(from && to){
+            findParams.query.from = from;
+            findParams.query.to = {
+                "$gte": from,
+                "$lte": to
+            };
+        }
+        
+        return mongoControl.find(findParams);
+    }
+
+
+    static removePerformance(goalId:string, inBetween:Date):Promise<any>{
+        let goalIndicatorParams:any = {
+            db: utils.getConnString(),
+            collection: 'goal-performance',
+            query: {
+                goalId:goalId,
+                from:{ '$lte': inBetween },
+                to: { '$gte': inBetween }
+            }
+        };
+
+        return mongoControl.remove(goalIndicatorParams)
+            .then(function(response:any){
+                return response.result;
+            });        
+    }
+
+
 }

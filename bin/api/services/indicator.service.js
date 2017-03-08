@@ -53,15 +53,45 @@ var IndicatorService = (function () {
             indicatorIds = indicators.map(function mapIndicatorId(indicator) {
                 return indicator._id.toString();
             });
-            // get indicator data and expectedvalues
-            return indicator_entity_1.IndicatorDataService.getIndicatorsData(customerId, indicatorIds, from, to).then(function onGetIndicatorsData(indicatorsData) {
-                //calculate performance for each indicator
+            return indicator_entity_1.IndicatorDataService.getPerformance(indicatorIds, from, to)
+                .then(function onPerformance(cachedPerformance) {
+                // we reset the goalids, because we want to ask later for those goals
+                // that are not cached
+                indicatorIds = [];
                 for (var i = 0; i < indicators.length; i++) {
-                    var performance = self.calculateIndicatorPerformance(indicators[i], _.filter(indicatorsData, _.matches({ indicatorId: indicators[i]._id.toString() })));
-                    indicatorsResult.push(_.extend(indicators[i], { performance: performance, id: indicators[i]._id.toString() }));
+                    var performance = _.find(cachedPerformance, _.matchesProperty('indicatorId', indicators[i]._id.toString()));
+                    if (performance) {
+                        indicatorsResult.push(_.extend(indicators[i], {
+                            performance: performance
+                        }));
+                    }
+                    else {
+                        indicatorIds.push(indicators[i]._id.toString());
+                    }
                 }
-                return indicatorsResult;
+                if (!indicatorIds.length) {
+                    return indicatorsResult;
+                }
+                return self.calculateSeveralPerformance(customerId, indicatorIds, _.filter(indicators, function (value) { return _.includes(indicatorIds, value._id.toString()); }), from, to)
+                    .then(function goalApiResult(response) {
+                    return indicatorsResult.concat(response);
+                });
             });
+        });
+    };
+    // get indicator data and expectedvalues
+    IndicatorService.calculateSeveralPerformance = function (customerId, indicatorIds, indicators, from, to) {
+        var result = [], self = this;
+        return indicator_entity_1.IndicatorDataService.getIndicatorsDataBetween(customerId, indicatorIds, from, to).then(function onGetIndicatorsData(indicatorsData) {
+            //calculate performance for each indicator
+            for (var i = 0; i < indicators.length; i++) {
+                var performance = self.calculateIndicatorPerformance(indicators[i], _.filter(indicatorsData, _.matches({ indicatorId: indicators[i]._id.toString() })), from, to);
+                indicator_entity_1.IndicatorDataService.insertPerformance(performance);
+                result.push(_.extend(indicators[i], {
+                    performance: performance,
+                }));
+            }
+            return result;
         });
     };
     IndicatorService.saveIndicator = function (customerId, indicator) {
@@ -156,7 +186,7 @@ var IndicatorService = (function () {
             indicatorData[i].date = moment(indicatorData[i].date).toDate();
             // validar que todos los datos sean correctos
             if (!(indicatorData[i].indicatorId
-                && indicatorData[i].value
+                && indicatorData[i].value !== null
                 && moment(indicatorData[i].date).isValid())) {
                 return new Promise(function (resolve, reject) {
                     return resolve({
@@ -166,16 +196,41 @@ var IndicatorService = (function () {
                 });
             }
         }
-        return indicator_entity_1.IndicatorDataService.insertIndicatorData(indicatorData)
-            .then(function onSaveIndicators(response) {
-            return indicator_entity_1.IndicatorDataService.getIndicatorsLastSync([indicatorId])
-                .then(function (indicatorSyncs) {
-                return indicatorSyncs[0];
+        var dates = _.flatMap(indicatorData, function (iData) { return iData.date; });
+        var datesToAdd = [];
+        var datesToUpdate = [];
+        return indicator_entity_1.IndicatorDataService.getIndicatorDataDates(customerId, indicatorId, dates)
+            .then(function onGetDates(response) {
+            for (var i = 0; i < dates.length; i++) {
+                var oldIndicator = _.find(response, _.matchesProperty('date', dates[i]));
+                var newIndicator = _.find(indicatorData, _.matchesProperty('date', dates[i]));
+                if (oldIndicator) {
+                    // must UPDATE on the db
+                    oldIndicator.value = newIndicator.value;
+                    datesToUpdate.push(oldIndicator);
+                }
+                else {
+                    datesToAdd.push(newIndicator);
+                }
+            }
+            var requests = [];
+            if (datesToAdd.length) {
+                requests.push(indicator_entity_1.IndicatorDataService.insertIndicatorData(datesToAdd));
+            }
+            for (var j = 0; j < datesToUpdate.length; j++) {
+                requests.push(indicator_entity_1.IndicatorDataService.updateIndicatorDataValue(customerId, datesToUpdate[j]));
+            }
+            return Promise.all(requests)
+                .then(function onSaveIndicators(response) {
+                return indicator_entity_1.IndicatorDataService.getIndicatorsLastSync([indicatorId])
+                    .then(function (indicatorSyncs) {
+                    return indicatorSyncs[0];
+                });
             });
         });
     };
     IndicatorService.getAllIndicatorData = function (customerId, indicatorId) {
-        return indicator_entity_1.IndicatorDataService.getIndicatorsData(customerId, [indicatorId]);
+        return indicator_entity_1.IndicatorDataService.getIndicatorsDataBetween(customerId, [indicatorId]);
     };
     IndicatorService.setQuarterExpectation = function (customerId, indicatorId, quarter) {
         var startOfQuarter = moment(quarter.date).startOf('quarter').toDate();
@@ -183,7 +238,7 @@ var IndicatorService = (function () {
         var self = this;
         return Promise.all([
             indicator_entity_1.IndicatorDataService.get(customerId, indicatorId),
-            indicator_entity_1.IndicatorDataService.getIndicatorsData(customerId, [indicatorId], startOfQuarter, endOfQuarter)
+            indicator_entity_1.IndicatorDataService.getIndicatorsDataBetween(customerId, [indicatorId], startOfQuarter, endOfQuarter)
         ]).then(function onResponseAll(values) {
             // detalles del indicador solicitado
             var indicator = values[0];
@@ -271,13 +326,80 @@ var IndicatorService = (function () {
      * @param {any} indicatorExpected
      * @returns
      */
-    IndicatorService.calculateIndicatorPerformance = function (indicator, indicatorData) {
-        var result;
-        if (indicator.performanceComparison === shared_1.PerformanceComparisons.lessThan) {
-            result = this.calculateLessThanPerformance(indicator, indicatorData);
+    IndicatorService.calculateIndicatorPerformance = function (indicator, months, from, to) {
+        var consolidateData = 0;
+        var consolidateExpected = 0;
+        var oneUnitPercentageValue = 0;
+        var result = {
+            indicatorId: indicator._id.toString(),
+            from: from,
+            to: to,
+            unitValue: 0,
+            progressPerformance: [],
+            // if there is no data the default is "red" and "0%" 
+            periodPerformance: {
+                semaphoreStatus: shared_1.SemaphoreStatus.red,
+                value: 0,
+                date: to
+            }
+        };
+        if (!months.length) {
+            return result;
+        }
+        consolidateExpected = _.sumBy(months, 'expected');
+        if (indicator.datasource.columnOperation === shared_1.Operations.average) {
+            consolidateExpected = consolidateExpected / months.length;
+        }
+        // get the performance progress
+        for (var i = 0; i < months.length; i++) {
+            var value = void 0;
+            consolidateData += months[i].value;
+            if (indicator.datasource.columnOperation === shared_1.Operations.average) {
+                value = consolidateData / (i + 1);
+            }
+            else {
+                value = consolidateData;
+            }
+            result.progressPerformance.push(this.getAccumulatedMonthPerformance(indicator, from, months[i].date, value, consolidateExpected));
+        }
+        if (indicator.datasource.columnOperation === shared_1.Operations.average) {
+            result.unitValue = consolidateData / months.length;
         }
         else {
-            result = this.calculateEqualsToPerformance(indicator, indicatorData);
+            result.unitValue = consolidateData;
+        }
+        result.periodPerformance = result.progressPerformance[result.progressPerformance.length - 1];
+        return result;
+    };
+    IndicatorService.getAccumulatedMonthPerformance = function (indicator, from, to, value, expected) {
+        var result = {
+            semaphoreStatus: shared_1.SemaphoreStatus.red,
+            value: 0,
+            date: to
+        };
+        if (indicator.performanceComparison === shared_1.PerformanceComparisons.lessThan) {
+            result.value = this.calculateLessThanPercentage(indicator, value, expected);
+        }
+        else {
+            result.value = this.calculateEqualsToPercentage(indicator, value, expected);
+        }
+        if (result.value > 1) {
+            result.value = 1;
+        }
+        if (result.value < 0) {
+            result.value = 0;
+        }
+        if (result.value > indicator.semaphore.redUntil) {
+            // yellow or green
+            if (result.value > indicator.semaphore.yellowUntil) {
+                result.semaphoreStatus = shared_1.SemaphoreStatus.green;
+            }
+            else {
+                result.semaphoreStatus = shared_1.SemaphoreStatus.yellow;
+            }
+        }
+        else {
+            result.semaphoreStatus = shared_1.SemaphoreStatus.red;
         }
         return result;
     };
@@ -305,83 +427,24 @@ var IndicatorService = (function () {
      * @param {Array} months
      * @returns
      */
-    IndicatorService.calculateLessThanPerformance = function (indicator, months) {
-        var consolidateData = 0;
-        var consolidateExpected = 0;
-        var onePercentValue = 0;
-        var performanceResult = {
-            semaphoreStatus: shared_1.SemaphoreStatus.green,
-            value: 0
-        };
-        if (!months.length) {
-            performanceResult.semaphoreStatus = shared_1.SemaphoreStatus.red;
-            performanceResult.value = 0;
-            return performanceResult;
-        }
-        // get the consolidates
-        for (var i = 0; i < months.length; i++) {
-            consolidateData += months[i].value;
-            consolidateExpected += months[i].expected;
-        }
-        if (indicator.datasource.columnOperation === shared_1.Operations.average) {
-            consolidateData = consolidateData / months.length;
-            consolidateExpected = consolidateExpected / months.length;
-        }
-        onePercentValue = consolidateExpected / (100 - indicator.semaphore.yellowUntil * 100);
-        performanceResult.value = 1 - (consolidateData / onePercentValue) / 100;
-        if (performanceResult.value < 0) {
-            performanceResult.value = 0;
-        }
-        if (consolidateData >= consolidateExpected) {
-            // red or yellow
-            if (performanceResult.value > indicator.semaphore.redUntil) {
-                performanceResult.semaphoreStatus = shared_1.SemaphoreStatus.yellow;
-            }
-            else {
-                performanceResult.semaphoreStatus = shared_1.SemaphoreStatus.red;
-            }
-        }
-        return performanceResult;
+    IndicatorService.calculateLessThanPercentage = function (indicator, value, expected) {
+        // case study: monthly expected is less than 10 seconds per support call
+        // case study: the semaphore will be yellow until 60%
+        // if (expected value) is (100% - yellowUntilPercentage)
+        // 10 seconds = 40% (because up to 10 seconds the value is according to the expected)
+        // that means that => (100% - yellowUntilPercentage) / expected value  => % for a unit
+        // (100% - 60%) / 10s => 1s %
+        // 40% / 10 s => 1s %
+        // 4%/s => 1 second of call is equal to a 4% decrease of the performance value
+        // a call of 4 seconds subtract 16% of performance
+        // a call of 10 seconds is 60%
+        // one of 11 56%   
+        var oneUnitPercentage = (1 - indicator.semaphore.yellowUntil) / expected;
+        return 1 - oneUnitPercentage * value;
     };
-    IndicatorService.calculateEqualsToPerformance = function (indicator, months) {
-        var consolidateData = 0;
-        var consolidateExpected = 0;
-        var onePercentValue = 0;
-        var performanceResult = {
-            semaphoreStatus: shared_1.SemaphoreStatus.green,
-            value: 0
-        };
-        if (!months.length) {
-            performanceResult.semaphoreStatus = shared_1.SemaphoreStatus.red;
-            performanceResult.value = 0;
-            return performanceResult;
-        }
-        // get the consolidates
-        for (var i = 0; i < months.length; i++) {
-            consolidateData += months[i].value;
-            consolidateExpected += months[i].expected;
-        }
-        if (indicator.datasource.columnOperation === shared_1.Operations.average) {
-            consolidateData = consolidateData / months.length;
-            consolidateExpected = consolidateExpected / months.length;
-        }
-        performanceResult.value = (consolidateData / consolidateExpected);
-        if (performanceResult.value > 1) {
-            performanceResult.value = 1;
-        }
-        if (performanceResult.value < 0) {
-            performanceResult.value = 0;
-        }
-        if (consolidateData >= consolidateExpected) {
-            // red or yellow
-            if (performanceResult.value > indicator.semaphore.redUntil) {
-                performanceResult.semaphoreStatus = shared_1.SemaphoreStatus.yellow;
-            }
-            else {
-                performanceResult.semaphoreStatus = shared_1.SemaphoreStatus.red;
-            }
-        }
-        return performanceResult;
+    IndicatorService.calculateEqualsToPercentage = function (indicator, value, expected) {
+        var oneUnitPercentage = 1 / expected;
+        return oneUnitPercentage * value;
     };
     return IndicatorService;
 }());

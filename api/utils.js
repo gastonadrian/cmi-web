@@ -4,14 +4,14 @@ module.exports = function utils(){
 
         // 1) obtener la fecha del ultimo dato disponible 
         // feb 8
-        var lastDate = new Date(),
+        var lastDate = moment().startOf('month').toDate(),
             legendFormat = 'YYYY-MM-DD',
-            currentYearStart = new Date(moment(lastDate).startOf('year').toISOString()),
-            currentQuarterStart = new Date(moment(lastDate).startOf('quarter').toISOString()),
+            currentYearStart = moment(lastDate).startOf('year').toDate(),
+            currentQuarterStart = moment(lastDate).startOf('quarter').toDate(),
             currentSemesterStart = new Date(lastDate),
             currentSemester = getSemester(currentSemesterStart),
             previousYearStart = new Date(moment(currentYearStart).year()-1, 0, 1),
-            previousYearEnd = new Date(moment(currentYearStart).year()-1, 11, 31),
+            previousYearEnd = moment(previousYearStart).endOf('year').toDate(),
             previousSemesterEnd = new Date(currentSemester.start),
             previousSemester = getSemester(moment(previousSemesterEnd).subtract(1, 'day')),
             previousQuarterEnd = new Date(moment(currentQuarterStart).subtract(1, 'day').toISOString()),
@@ -83,8 +83,8 @@ module.exports = function utils(){
             from = moment(dataPeriods[periodLegend].start).format('YYYYMMDD');
         }
 
-        to = new Date(moment(to).toISOString());
-        from = new Date(moment(from).toISOString());
+        to = moment(to).toDate();
+        from = moment(from).toDate();
 
         return {
             to: to,
@@ -103,21 +103,21 @@ module.exports = function utils(){
      *      julio- fin de diciembre
      */
     function  getSemester(date){
-        var copy = new Date(moment(date).startOf('quarter').toISOString()),
+        var copy = moment(date).startOf('quarter').toDate(),
             currentYear= moment(copy).year();
 
         if(moment(copy).month() == 0 || moment(copy).month() == 2){
             // first semester
             return {
                 start: new Date(currentYear, 0, 1),
-                end: new Date(currentYear, 5, 30)
+                end: moment(new Date(currentYear, 5, 30)).endOf('month').toDate()
             };
         }
         else{
             // second semester
             return {
                 start: new Date(currentYear, 6, 1),
-                end: new Date(currentYear, 11, 31)
+                end: moment(new Date(currentYear, 11, 31)).endOf('month').toDate()
             };
         }
     }

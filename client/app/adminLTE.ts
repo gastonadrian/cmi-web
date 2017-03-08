@@ -665,12 +665,11 @@ function _init() {
     }
     function login(){
         $.post('/api/login', loginForm.serialize(), function(response){
-            console.log('response');
+            // console.log('response');
             window.location.href = '/';
         });
     }
 })(jQuery);
-
 /*
  * TODO LIST CUSTOM PLUGIN
  * -----------------------

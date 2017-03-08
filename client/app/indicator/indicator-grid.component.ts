@@ -1,9 +1,8 @@
 import { Component, Input, ElementRef, AfterViewInit, ViewChild, OnInit } from '@angular/core';import { Router, ActivatedRoute, Params } from '@angular/router';
-import { IndicatorService } from './../shared/services/';
+import { IndicatorDataService } from './../shared/services/';
 import { Indicator } from './../shared/models/indicator';
 import { AppSettings } from './../shared/models/shared';
-
-declare let moment:any;
+import { IndicatorDataBase } from './../../../api/models/indicator-data.base';
 declare let $:any;
 
 @Component({
@@ -12,43 +11,28 @@ declare let $:any;
   templateUrl: 'indicator-grid.template.html'
 })
 export class IndicatorGridComponent implements OnInit, AfterViewInit{
-  @ViewChild('table') element: ElementRef;
-  private htmlElement: HTMLElement;
+@ViewChild('indicatorsTable') element: ElementRef;
+  private indicatorsTableElement: HTMLElement;
+  private indicatorsDataTable:any;
 
-  public indicator: Indicator;
-  public values:Array<{ date:string, value:number, expected?:number }>;
+  public indicatorsdata: Array<IndicatorDataBase>;
 
   constructor( 
     private route: ActivatedRoute,
     private router: Router,
-    public indicatorService: IndicatorService) { 
+    public indicatorService: IndicatorDataService) { 
   }
   
   ngAfterViewInit() {
-      this.htmlElement = this.element.nativeElement;
-      this.setupTable();
+      this.indicatorsTableElement = this.element.nativeElement;
+      this.indicatorsDataTable = $(this.indicatorsTableElement).DataTable(AppSettings.DataTableConfig);    
   }
 
   ngOnInit(){
     this.route.data
       .subscribe((data:any) => {        
-        this.indicator = data.indicator;
-        this.values = data.indicator.values.map( (data:any) => {
-          return {
-            date: moment(new Date(data.date)).format('MMM-YY'),
-            value: data.value,
-            expected: data.expected
-          };
-        });
-
-        this.setupTable();     
+        this.indicatorsdata = data.indicatordata;
      });
   }
 
-  setupTable(){
-    if(!this.htmlElement || !this.values || !this.values.length){
-      return;
-    }
-      $(this.htmlElement).DataTable(AppSettings.DataTableConfig);    
-  }
 }

@@ -33,6 +33,7 @@ import { IndicatorResolver } from './shared/services/indicator-resolver';
 import { IndicatorEditResolver } from './shared/services/indicator-edit-resolver';
 import { UserListResolver } from './shared/services/user-list-resolver';
 import { IndicatorDataResolver } from './shared/services/indicator-data-resolver';
+import { GoalDashboardResolver } from './shared/services/goal-dashboard-resolver';
 
 const appRoutes: Routes = [
   { 
@@ -56,14 +57,14 @@ const appRoutes: Routes = [
       showPeriods:true      
     },
     resolve:{
-      goal: GoalResolver
+      goal: GoalDashboardResolver
     },
     children: [
       { 
         path: 'indicators/:indicatorid', 
         component: IndicatorGridComponent,
         resolve:{
-          indicator: IndicatorGridResolver
+          indicatordata: IndicatorDataResolver
         }
       },
     ]
@@ -217,7 +218,8 @@ const appRoutes: Routes = [
     IndicatorEditResolver,
     UserListResolver,
     IndicatorDataResolver,
-    IndicatorDataService
+    IndicatorDataService,
+    GoalDashboardResolver
   ],
   bootstrap: [AppComponent]
 })

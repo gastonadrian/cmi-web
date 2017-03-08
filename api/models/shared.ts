@@ -1,6 +1,7 @@
 export interface IPerformance {
     semaphoreStatus:SemaphoreStatus;
     value:number;
+    date:Date;
 };
 
 

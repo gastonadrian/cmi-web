@@ -1,1 +1,1 @@
-{"version":3,"file":"indicator.js","sourceRoot":"","sources":["indicator.ts"],"names":[],"mappings":";;;;;OACO,EAAE,aAAa,EAAE,MAAM,qBAAqB;AAEnD;IAAwC,sCAAa;IAArD;QAAwC,8BAAa;IAIrD,CAAC;IAAD,yBAAC;AAAD,CAAC,AAJD,CAAwC,aAAa,GAIpD;AAAA,CAAC"}
+{"version":3,"file":"indicator.js","sourceRoot":"","sources":["indicator.ts"],"names":[],"mappings":";;;;;OACO,EAAE,aAAa,EAAE,MAAM,qBAAqB;AAGnD;IAAwC,sCAAa;IAArD;QAAwC,8BAAa;IAIrD,CAAC;IAAD,yBAAC;AAAD,CAAC,AAJD,CAAwC,aAAa,GAIpD;AAAA,CAAC"}

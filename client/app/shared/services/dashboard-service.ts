@@ -8,6 +8,7 @@ import { Perspective } from './../models/perspective';
 
 import { Indicator } from './../models/indicator';
 import { DateValue, Performance, AppSettings } from './../models/shared';
+import { PerspectiveApiResult } from "../../../../api/models/api/perspective";
 
 declare let moment:any;
 
@@ -17,7 +18,7 @@ export class DashboardService {
     constructor(private http : Http){
     }
 
-    get(from?:Date, to?:Date): Observable<Array<Perspective>>{
+    get(from?:Date, to?:Date): Observable<Array<PerspectiveApiResult>>{
 
         let paramString:string = '';
         if(to && from){
@@ -37,17 +38,9 @@ export class DashboardService {
         return headers;
     }
 
-    mapPerspective(response:Response): Array<Perspective>{
+    mapPerspective(response:Response): Array<PerspectiveApiResult>{
         let tmpResult = response.json() as any;
-        let result = tmpResult.data as Array<Perspective>;
-        for(var i = 0; i < result.length; i ++){
-            result[i].performance = new Performance(result[i].performance.dateFrom, result[i].performance.value, result[i].performance.semaphoreStatus, result[i].performance.dateTo);
-        
-            for(var j=0; j < result[i].goals.length; j++){
-                var tmpPerformance = result[i].goals[j].performance;
-                result[i].goals[j].performance = new Performance(tmpPerformance.dateFrom, tmpPerformance.value*100, tmpPerformance.semaphoreStatus, tmpPerformance.dateTo);
-            }
-        }
+        let result = tmpResult.data as Array<PerspectiveApiResult>;
 
         return result;
     }

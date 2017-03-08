@@ -64,19 +64,20 @@ var PerspectiveService = (function () {
                 var perspectiveGoals = _.filter(goals, _.matchesProperty('perspectiveId', perspectives[index]._id.toString()));
                 result.push(_.extend(perspectives[index], {
                     goals: perspectiveGoals,
-                    performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals)
+                    performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals, to)
                 }));
             }
             return result;
         });
     };
-    PerspectiveService.calculatePerspectivePerformance = function (perspective, goals) {
+    PerspectiveService.calculatePerspectivePerformance = function (perspective, goals, to) {
         var result = {
             value: 1,
-            semaphoreStatus: shared_1.SemaphoreStatus.red
+            semaphoreStatus: shared_1.SemaphoreStatus.red,
+            date: to
         };
         // making sure that we consider cases where perspectives has no goals
-        result.value = _.sumBy(goals, 'performance.value') / goals.length || 0;
+        result.value = _.sumBy(goals, 'performance.periodPerformance.value') / goals.length || 0;
         if (result.value <= perspective.semaphore.yellowUntil) {
             if (result.value <= perspective.semaphore.redUntil) {
                 result.semaphoreStatus = shared_1.SemaphoreStatus.red;

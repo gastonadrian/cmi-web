@@ -8,6 +8,7 @@ import { MongoIndicatorData} from './../models/mongo/indicator-data';
 import { MongoGoalIndicator } from './../models/mongo/goal-indicator.mongo';
 import { GoalIndicatorApiResult } from './../models/api/goal-indicator';
 import { IIndicatorSync } from './../models/indicator-sync.interface';
+import { IndicatorPerformanceBase } from "../models/indicator-performance.base";
 
 export class IndicatorDataService{
     constructor(){}
@@ -229,7 +230,7 @@ export class IndicatorDataService{
      * @param {any} to
      * @returns
      */
-    static getIndicatorsData(customerId:string, indicatorIds:Array<string>, from?:Date, to?:Date):Promise<Array<MongoIndicatorData>>{
+    static getIndicatorsDataBetween(customerId:string, indicatorIds:Array<string>, from?:Date, to?:Date):Promise<Array<MongoIndicatorData>>{
         let findParams:any = {
             db: utils.getConnString(),
             collection: 'indicators-data',
@@ -238,6 +239,9 @@ export class IndicatorDataService{
                 indicatorId: {
                     "$in":indicatorIds
                 }
+            },
+            sortBy:{
+                "date": 1
             }
         };
 
@@ -251,6 +255,22 @@ export class IndicatorDataService{
         return mongoControl.find(findParams);
     }
 
+    static getIndicatorDataDates(customerId:string, indicatorId:string, dates:Array<Date>):Promise<Array<MongoIndicatorData>>{
+        let findParams:any = {
+            db: utils.getConnString(),
+            collection: 'indicators-data',
+            query: {
+                customerId:customerId,
+                indicatorId: indicatorId,
+                date: {
+                    "$in":dates
+                }
+            }
+        };
+
+ 
+        return mongoControl.find(findParams);
+    }
 
 
     static insertIndicatorData(indicatorDataArray:Array<MongoIndicatorData>):Promise<any>{
@@ -283,5 +303,76 @@ export class IndicatorDataService{
                 return response.result;
             });        
     }
+
+    static updateIndicatorDataValue(customerId:string, indicatorData:MongoIndicatorData):Promise<any>{
+        let params:any = {
+            db: utils.getConnString(),
+            collection: 'indicators-data',
+            id: indicatorData._id,
+            update: {
+                value: indicatorData.value
+            }
+        };
+
+        return mongoControl.updateById(params)
+            .then(function(response:any){
+                return response.result;
+            });        
+    }
+
+    static insertPerformance(indicatorPerformance:IndicatorPerformanceBase):Promise<any>{
+        let params:any = {
+            db: utils.getConnString(),
+            collection: 'indicator-performance',
+            data: [indicatorPerformance]
+        };
+        return mongoControl.insert(params)
+            .then(function(response:any){
+                return {
+                    id: response.insertedIds.pop().toString()
+                };
+            });        
+    }
+
+    static getPerformance(indicatorIds:Array<string>, from?:Date, to?:Date):Promise<Array<IndicatorPerformanceBase>>{
+        let findParams:any = {
+            db: utils.getConnString(),
+            collection: 'indicator-performance',
+            query: {
+                indicatorId: {
+                    "$in":indicatorIds
+                }
+            },
+            sortBy:{
+                "to": -1
+            }
+        };
+
+        if(from && to){
+            findParams.query.from = from;
+            findParams.query.to = to;
+        }
+        
+        return mongoControl.find(findParams);
+    }
+    
+    static removePerformance(indicatorId:string, inBetween:Date):Promise<any>{
+        // delete goal-indicator relations
+        let goalIndicatorParams:any = {
+            db: utils.getConnString(),
+            collection: 'indicator-performance',
+            query: {
+                indicatorId:indicatorId,
+                from:{ '$lte': inBetween },
+                to: { '$gte': inBetween }
+            }
+        };
+
+        return mongoControl.remove(goalIndicatorParams)
+            .then(function(response:any){
+                return response.result;
+            });        
+    }
+    
 
 }

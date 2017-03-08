@@ -74,6 +74,10 @@ module.exports = function api(options) {
         this.act('role:goals,cmd:get', msg, respond);        
     });
 
+    this.add('role:api,path:goaldetailedperformance', function(msg, respond){
+        this.act('role:goals,cmd:detailedperformance', msg, respond);        
+    });
+
     this.add('role:api,path:goalcreate', function(msg, respond){
         this.act('role:goals,cmd:save', msg, respond);
     });

@@ -731,6 +731,12 @@ function _init() {
         return false;
     }
 })(jQuery);
+moment.updateLocale('en', {
+    months : [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
+        "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ]
+});
 
 /*
  * TODO LIST CUSTOM PLUGIN

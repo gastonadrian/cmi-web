@@ -9,18 +9,18 @@
         <div class="box-body">
             <div class="row">
                 <div class="col-md-6 col-xs-12">
-                    <gauge-chart [config]="gaugeConfig"></gauge-chart>
+                    <gauge-chart [observableConfig]="gaugeConfigChanged$"></gauge-chart>
                 </div>
                 <div class="col-md-6 col-xs-12">
                     <p class="text-center">
                         <strong>Objetivos</strong>
                     </p>
-                    <a *ngFor="let goal of perspective.goals" [routerLink]="['../goals', goal.id]">
+                    <a *ngFor="let goal of perspective.goals" [routerLink]="['../goals/details', goal._id]">
                         <div  class="progress-group">
                             <span class="progress-text" [innerHTML]="goal.title"></span>
-                            <span class="progress-number"><strong>{{ goal.performance?.value | number:'1.0-0' }} %</strong></span>
+                            <span class="progress-number"><strong>{{ goal.performance?.periodPerformance.value*100 | number:'1.0-0' }} %</strong></span>
                             <div class="progress sm">
-                                <div class="progress-bar" [ngClass]="'progress-bar-' + getSemaphoreStatusColour(goal.performance?.semaphoreStatus)" [ngStyle]="{'width': goal.performance?.value + '%'}"></div>
+                                <div class="progress-bar progress-bar-striped" [ngClass]="'progress-bar-' + getSemaphoreStatusColour(goal.performance?.periodPerformance.semaphoreStatus)" [ngStyle]="{'width': goal.performance?.periodPerformance.value*100 + '%'}"></div>
                             </div>
                         </div>
                     </a>

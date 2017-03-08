@@ -14,12 +14,12 @@
                     </div>
                     <div class="col-md-4 col-xs-12">
                         <p class="text-center"><strong>Indicadores</strong></p>
-                        <a *ngFor="let indicator of goal.indicators" [routerLink]="['indicators',indicator.indicator.id]">
+                        <a *ngFor="let indicator of goal.indicators" [routerLink]="['indicators',indicator._id]">
                             <div  class="progress-group">
-                                <span class="progress-text" [innerHTML]="indicator.indicator.title"></span>
-                                <span class="progress-number"><strong>{{ indicator.indicator.values[0].value + ' ' + indicator.indicator.unit  }}</strong></span>
+                                <span class="progress-text" [innerHTML]="indicator.title"></span>
+                                <span class="progress-number"><strong>{{ indicator.performance?.value*100 | number:'1.0-0' }}%</strong></span>
                                 <div class="progress sm">
-                                    <div class="progress-bar" [ngClass]="'progress-bar-' + indicator.performance.semaphoreStatus" [ngStyle]="{'width': indicator.performance.value + 'px'}"></div>
+                                    <div class="progress-bar progress-bar-striped" [ngClass]="'progress-bar-' + getSemaphoreStatusColour(indicator.performance?.semaphoreStatus)" [ngStyle]="{'width': indicator.performance?.value*100 + '%'}"></div>
                                 </div>
                             </div>
                         </a>

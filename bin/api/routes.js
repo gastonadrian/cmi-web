@@ -30,6 +30,13 @@ var routes = {
                     fail: '/login'
                 }
             },
+            goaldetailedperformance: {
+                GET: true,
+                suffix: '/:goalId/:from?/:to?',
+                secure: {
+                    fail: '/login'
+                }
+            },
             goalupdate: {
                 POST: true,
                 secure: {

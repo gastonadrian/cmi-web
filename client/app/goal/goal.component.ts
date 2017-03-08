@@ -4,8 +4,12 @@ import { LineChartConfig } from './../shared/models/line-chart-config';
 import { GoalService } from './../shared/services/';
 
 import { GoalApiResult } from './../../../api/models/api/goal';
-import { DateValue, Performance } from './../shared/models/shared';
+import { GoalPerformanceBase } from './../../../api/models/goal-performance.base';
 
+import { Performance, AppSettings } from './../shared/models/shared';
+import { IPerformance } from "../../../api/models/shared";
+
+declare let moment:any;
 
 @Component({
   moduleId: module.id,
@@ -21,22 +25,28 @@ export class GoalComponent implements OnInit{
     private router: Router,
     public goalService: GoalService) { 
   }
+
+  getSemaphoreStatusColour(semaphoreValue:number):string{
+    return AppSettings.semaphoreStatusText[semaphoreValue];
+  }
+
   
   ngOnInit(){
     this.route.data
       .subscribe((data:any) => {        
         this.goal = data.goal;
+        let datasetValues = this.goal.performance.progressPerformance.map( (data:IPerformance) => {
+              return { x: moment(data.date).toDate().getTime(), y: data.value*100 };
+            });
+
         this.chartConfig = {
           settings: {
-            xAxisLabel: 'Date',
-            yAxisLabel: 'Progress (%)',
+            xAxisLabel: 'Fecha',
+            yAxisLabel: 'Progreso (%)',
             xAxisFormat: 'MMM-YY'
           }, 
           dataset:[{
-            values:[],
-            // values: this.goal.values.map( (data:DateValue) => {
-            //   return { x: data.date, y: data.value };
-            // }),
+            values: datasetValues,
             key: this.goal.title,
             color: '#7777ff'
           }] 

@@ -17,7 +17,7 @@ var GoalDataService = (function () {
         var findParams = {
             db: utils.getConnString(),
             collection: 'goals',
-        }, mongoIds;
+        }, mongoIds = [];
         if (!goalIds.length) {
             return new Promise(function ok(resolve, reject) {
                 return reject('no hay datos');
@@ -98,6 +98,56 @@ var GoalDataService = (function () {
                 .then(function (response) {
                 return response.result;
             });
+        });
+    };
+    GoalDataService.insertGoalPerformance = function (goalPerformance) {
+        var params = {
+            db: utils.getConnString(),
+            collection: 'goal-performance',
+            data: [goalPerformance]
+        };
+        return mongoControl.insert(params)
+            .then(function (response) {
+            return {
+                id: response.insertedIds.pop().toString()
+            };
+        });
+    };
+    GoalDataService.getGoalPerformance = function (goalIds, from, to) {
+        var findParams = {
+            db: utils.getConnString(),
+            collection: 'goal-performance',
+            query: {
+                goalId: {
+                    "$in": goalIds
+                }
+            },
+            sortBy: {
+                "to": -1
+            }
+        };
+        if (from && to) {
+            findParams.query.from = from;
+            findParams.query.to = {
+                "$gte": from,
+                "$lte": to
+            };
+        }
+        return mongoControl.find(findParams);
+    };
+    GoalDataService.removePerformance = function (goalId, inBetween) {
+        var goalIndicatorParams = {
+            db: utils.getConnString(),
+            collection: 'goal-performance',
+            query: {
+                goalId: goalId,
+                from: { '$lte': inBetween },
+                to: { '$gte': inBetween }
+            }
+        };
+        return mongoControl.remove(goalIndicatorParams)
+            .then(function (response) {
+            return response.result;
         });
     };
     return GoalDataService;

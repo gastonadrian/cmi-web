@@ -19,12 +19,12 @@
                     <h3>Sem&aacute;foro</h3> 
                     <h4>Necesitamos nos indique como configurar el sem&aacute;foro para el indicador (por defecto utilizamos los valores que configuro en sem&aacute;foro global)</h4>
                     <div class="form-group" [ngClass]="{ 'has-error': !redUntil.valid && !redUntil.pristine }">
-                        <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en rojo desde 0% hasta </label>
+                        <label for="" class="col-xs-12 control-label">El sem&aacute;foro estara en rojo desde 0% hasta </label>
                         <input type="number" [(ngModel)]="goal.semaphore.redUntil" class="form-control" name="redUntil" required #redUntil="ngModel">
                         <p class="help-block" [hidden]="redUntil.valid || redUntil.pristine">Este campo es requerido.</p>
                     </div>
                     <div class="form-group" [ngClass]="{ 'has-error': !yellowUntil.valid && !yellowUntil.pristine }">
-                        <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en amarillo desde {{redUntil.value}}% hasta</label>
+                        <label for="" class="col-xs-12 control-label">El sem&aacute;foro estara en amarillo desde {{redUntil.value}}% hasta</label>
                         <input type="number" [(ngModel)]="goal.semaphore.yellowUntil" class="form-control" name="yellowUntil" required #yellowUntil="ngModel">
                         <p class="help-block" [hidden]="yellowUntil.valid || yellowUntil.pristine">Este campo es requerido.</p>
                     </div>
