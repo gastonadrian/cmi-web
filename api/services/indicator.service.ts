@@ -245,65 +245,75 @@ export class IndicatorService{
             });            
         }
 
-        // validar que todos los elementos del array tengan los datos seteados
-        for(var i=0; i< indicatorData.length; i++){
-            indicatorData[i].customerId = customerId;
-            indicatorData[i].date = moment(indicatorData[i].date).toDate(); 
+        return IndicatorDataService.get(customerId, indicatorId)
+        .then(function onIndicator(indicator:MongoIndicator){
 
-            // validar que todos los datos sean correctos
-            if(!(indicatorData[i].indicatorId
-            && moment(indicatorData[i].date).isValid())){
-                return new Promise(function(resolve, reject){
-                    return resolve({
-                        ok:false,
-                        why: 'Faltan datos'
-                    });
-                });
-            }
-
-        }
-
-        let dates:Array<Date> = _.flatMap(indicatorData, (iData:MongoIndicatorData) => { return iData.date; } );
-        let datesToAdd:Array<MongoIndicatorData> = [];
-        let datesToUpdate:Array<MongoIndicatorData> = [];
-        
-        return IndicatorDataService.getIndicatorDataDates(customerId, indicatorId, dates)
-            .then(function onGetDates(response:Array<MongoIndicatorData>){
-                for(var i =0; i < dates.length; i++){
-
-                    let oldIndicator:MongoIndicatorData = _.find(response, _.matchesProperty('date', dates[i]));
-                    let newIndicator:MongoIndicatorData = _.find(indicatorData, _.matchesProperty('date', dates[i]));
-
-                    if(newIndicator.value === null){
-                        continue;
-                    }
-
-                    if(oldIndicator){
-                        // must UPDATE on the db
-                        oldIndicator.value = newIndicator.value;
-                        datesToUpdate.push(oldIndicator);
-                    } else {
-                        datesToAdd.push(newIndicator)
-                    }
-                }
-
-                let requests:Array<Promise<any>> = [];
-                
-                if(datesToAdd.length){
-                     requests.push(IndicatorDataService.insertIndicatorData(datesToAdd))                    
-                }
-                for(var j=0; j < datesToUpdate.length; j++){
-                    requests.push(IndicatorDataService.updateIndicatorDataValue(customerId, datesToUpdate[j]));
-                }
-
-                return Promise.all(requests)
-                    .then(function onSaveIndicators(response){
-                        return IndicatorDataService.getIndicatorsLastSync([indicatorId])
-                            .then(function (indicatorSyncs:Array<IIndicatorSync>){
-                                return indicatorSyncs[0];
-                            });
+            // validar que todos los elementos del array tengan los datos seteados
+            for(var i=0; i< indicatorData.length; i++){
+                indicatorData[i].customerId = customerId;
+                indicatorData[i].expected = indicator.datasource.monthlyExpected;
+                indicatorData[i].date = moment(indicatorData[i].date).toDate(); 
+    
+                // validar que todos los datos sean correctos
+                if(!(indicatorData[i].indicatorId
+                && moment(indicatorData[i].date).isValid())){
+                    return new Promise(function(resolve, reject){
+                        return resolve({
+                            ok:false,
+                            why: 'Faltan datos'
                         });
-            });
+                    });
+                }
+    
+            }
+    
+            let dates:Array<Date> = _.flatMap(indicatorData, (iData:MongoIndicatorData) => { return iData.date; } );
+            let datesToAdd:Array<MongoIndicatorData> = [];
+            let datesToUpdate:Array<MongoIndicatorData> = [];
+            
+            return IndicatorDataService.getIndicatorDataDates(customerId, indicatorId, dates)
+                .then(function onGetDates(response:Array<MongoIndicatorData>){
+                    for(var i =0; i < dates.length; i++){
+    
+                        let oldIndicator:MongoIndicatorData = _.find(response, _.matchesProperty('date', dates[i]));
+                        let newIndicator:MongoIndicatorData = _.find(indicatorData, _.matchesProperty('date', dates[i]));
+    
+                        if(newIndicator.value === null){
+                            continue;
+                        }
+    
+                        if(oldIndicator){
+                            // must UPDATE on the db
+                            oldIndicator.value = newIndicator.value;
+                            datesToUpdate.push(oldIndicator);
+                        } else {
+                            datesToAdd.push(newIndicator)
+                        }
+                    }
+    
+                    let requests:Array<Promise<any>> = [];
+                    
+                    if(datesToAdd.length){
+                         requests.push(IndicatorDataService.insertIndicatorData(datesToAdd))                    
+                    }
+                    for(var j=0; j < datesToUpdate.length; j++){
+                        requests.push(IndicatorDataService.updateIndicatorDataValue(customerId, datesToUpdate[j]));
+                    }
+    
+                    return Promise.all(requests)
+                        .then(function onSaveIndicators(response){
+                            return IndicatorDataService.getIndicatorsLastSync([indicatorId])
+                                .then(function (indicatorSyncs:Array<IIndicatorSync>){
+                                    return indicatorSyncs[0];
+                                });
+                            });
+                });
+
+
+
+
+
+        });
     }
 
     static getAllIndicatorData(customerId:string, indicatorId:string):Promise<any>{
@@ -443,7 +453,7 @@ export class IndicatorService{
             return result;
         }
 
-        consolidateExpected = _.sumBy(months, 'expected');
+        consolidateExpected = _.sumBy(months, 'expected') || 1;
 
         if(indicator.datasource.columnOperation === Operations.average){
             consolidateExpected = consolidateExpected / months.length;

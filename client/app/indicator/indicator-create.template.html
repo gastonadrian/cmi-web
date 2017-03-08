@@ -28,7 +28,13 @@
                         <p class="help-block" [hidden]="columnOperation.valid || columnOperation.pristine">Este campo es requerido.</p>
                     </div>
                     <h3>An&aacute;lisis de datos</h3>
-                    <p>Para determinar la evoluci&oacute;n y performance de su indicador le solicitaremos en (en la seccion importaci&oacute;n de datos) que nos provea el valor esperado de cada indicador en manera mensual, por ejemplo: "El tiempo de espera debe ser <u>menor</u> a <u>10</u> minutos". </p>
+                    <p>Para determinar la evoluci&oacute;n y performance de su indicador le solicitamos ingrese el valor esperado de cada indicador en manera mensual, por ejemplo: "El tiempo de espera debe ser <u>menor</u> a <u>10</u> minutos". </p>
+                    <div class="form-group" [ngClass]="{ 'has-error': !expected.valid && !expected.pristine }">
+                        <label for="expected" class="control-label">Valor esperado mensual</label>
+                        <input type="number" [(ngModel)]="indicator.datasource.monthlyExpected" class="form-control" name="expected" required #expected="ngModel">
+                        <p class="help-block" [hidden]="expected.valid || expected.pristine">Este campo es requerido.</p>
+                    </div>                    
+                                        
                     <span class="help-block">Por favor indiquenos el modo de comparaci&oacute;n con el valor esperado</span>
                     <div class="radio">
                         <label>

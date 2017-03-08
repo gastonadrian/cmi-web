@@ -177,7 +177,6 @@ var GoalService = (function () {
         });
     };
     GoalService.calculateGoalPerformanceProgress = function (goal, indicators, indicatorFactors, from, to) {
-        var howManyMonths = moment.duration(moment(to).diff(moment(from))).asMonths();
         var unitPercentage = 1 / _.sumBy(indicatorFactors, 'factor');
         var indicatorsHelper = [];
         var result = {
@@ -200,10 +199,13 @@ var GoalService = (function () {
                 factor: goalIndicator.factor
             });
         }
-        for (var j = 0; j < howManyMonths; j++) {
-            var endOfMonth = moment(from).add(j, 'months').endOf('month').toDate();
-            var progress = this.getAccumulatedMonthPerformance(goal, endOfMonth, unitPercentage, indicatorsHelper);
+        var monthStart = from;
+        var monthEnd = moment(from).endOf('month').toDate();
+        while (moment(monthEnd).isBefore(to)) {
+            var progress = this.getAccumulatedMonthPerformance(goal, monthEnd, unitPercentage, indicatorsHelper);
             result.progressPerformance.push(progress);
+            monthStart = moment(monthStart).add(1, 'month').startOf('month').toDate();
+            monthEnd = moment(monthStart).endOf('month').toDate();
         }
         result.periodPerformance = result.progressPerformance[result.progressPerformance.length - 1];
         return result;
@@ -218,6 +220,10 @@ var GoalService = (function () {
             var indicatorPerformanceProgress = indicatorsHelper[k].indicator.performance.progressPerformance;
             var indicatorPerformance = _.find(indicatorPerformanceProgress, _.matchesProperty('date', to));
             if (indicatorPerformance) {
+                result.value += indicatorsHelper[k].factor * unitPercentage * indicatorPerformance.value;
+            }
+            else if (indicatorPerformanceProgress.length) {
+                indicatorPerformance = indicatorPerformanceProgress[indicatorPerformanceProgress.length - 1];
                 result.value += indicatorsHelper[k].factor * unitPercentage * indicatorPerformance.value;
             }
         }

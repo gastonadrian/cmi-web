@@ -12,15 +12,16 @@ module.exports = function utils(){
             currentSemester = getSemester(currentSemesterStart),
             previousYearStart = new Date(moment(currentYearStart).year()-1, 0, 1),
             previousYearEnd = moment(previousYearStart).endOf('year').toDate(),
-            previousSemesterEnd = new Date(currentSemester.start),
+            previousSemesterEnd = moment(currentSemester.start).subtract(1,'day').endOf('month').toDate(),
             previousSemester = getSemester(moment(previousSemesterEnd).subtract(1, 'day')),
-            previousQuarterEnd = new Date(moment(currentQuarterStart).subtract(1, 'day').toISOString()),
+            
+            previousQuarterEnd = moment(currentQuarterStart).subtract(1, 'day').endOf('month').toDate(),
             previousQuarterStart = new Date(moment(previousQuarterEnd).startOf('quarter').toISOString()),
-            secondPreviousQuarterEnd = new Date(moment(previousQuarterStart).subtract(1, 'day').toISOString()),
+            secondPreviousQuarterEnd = moment(previousQuarterStart).subtract(1, 'day').endOf('month').toDate(),
             secondPreviousQuarterStart = new Date(moment(secondPreviousQuarterEnd).startOf('quarter').toISOString()),
-            thirdPreviousQuarterEnd = new Date(moment(secondPreviousQuarterStart).subtract(1, 'day').toISOString()),
+            thirdPreviousQuarterEnd = moment(secondPreviousQuarterStart).subtract(1, 'day').endOf('month').toDate(),
             thirdPreviousQuarterStart = new Date(moment(thirdPreviousQuarterEnd).startOf('quarter').toISOString()),
-            fourthPreviousQuarterEnd = new Date(moment(thirdPreviousQuarterStart).subtract(1, 'day').toISOString()),
+            fourthPreviousQuarterEnd = moment(thirdPreviousQuarterStart).subtract(1, 'day').endOf('month').toDate(),
             fourthPreviousQuarterStart = new Date(moment(fourthPreviousQuarterEnd).startOf('quarter').toISOString());
             
         return {
@@ -79,12 +80,12 @@ module.exports = function utils(){
         // determinando cual es el periodo de tiempo que solicitaremos
         if(!(to && from  && moment(to).isValid() && moment(from).isValid())) {
             periodLegend = 'currentYear';
-            to = moment(dataPeriods[periodLegend].end).format('YYYYMMDD');
-            from = moment(dataPeriods[periodLegend].start).format('YYYYMMDD');
+            to = dataPeriods[periodLegend].end;
+            from = dataPeriods[periodLegend].start;
+        } else {
+            to = moment(to).endOf('month').toDate();
+            from = moment(from).toDate();
         }
-
-        to = moment(to).toDate();
-        from = moment(from).toDate();
 
         return {
             to: to,

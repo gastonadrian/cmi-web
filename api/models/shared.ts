@@ -35,7 +35,9 @@ export interface IDataSource{
     valueColumn: string,
     dateColumn: string,
     columnOperation?:Operations;
-    rowOperation?: string
+    rowOperation?: string,
+
+    monthlyExpected:number
 }
 
 export enum UserDataTypes{

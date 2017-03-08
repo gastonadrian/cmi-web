@@ -39,7 +39,8 @@ export class IndicatorCreateComponent implements OnInit, AfterViewInit{
       table:'',
       rowOperation:'',
       dateColumn:'',
-      valueColumn:''
+      valueColumn:'',
+      monthlyExpected: 1
    };
   public submitted: Boolean = false;
 

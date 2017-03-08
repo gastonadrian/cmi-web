@@ -180,53 +180,57 @@ var IndicatorService = (function () {
                 });
             });
         }
-        // validar que todos los elementos del array tengan los datos seteados
-        for (var i = 0; i < indicatorData.length; i++) {
-            indicatorData[i].customerId = customerId;
-            indicatorData[i].date = moment(indicatorData[i].date).toDate();
-            // validar que todos los datos sean correctos
-            if (!(indicatorData[i].indicatorId
-                && moment(indicatorData[i].date).isValid())) {
-                return new Promise(function (resolve, reject) {
-                    return resolve({
-                        ok: false,
-                        why: 'Faltan datos'
+        return indicator_entity_1.IndicatorDataService.get(customerId, indicatorId)
+            .then(function onIndicator(indicator) {
+            // validar que todos los elementos del array tengan los datos seteados
+            for (var i = 0; i < indicatorData.length; i++) {
+                indicatorData[i].customerId = customerId;
+                indicatorData[i].expected = indicator.datasource.monthlyExpected;
+                indicatorData[i].date = moment(indicatorData[i].date).toDate();
+                // validar que todos los datos sean correctos
+                if (!(indicatorData[i].indicatorId
+                    && moment(indicatorData[i].date).isValid())) {
+                    return new Promise(function (resolve, reject) {
+                        return resolve({
+                            ok: false,
+                            why: 'Faltan datos'
+                        });
                     });
-                });
-            }
-        }
-        var dates = _.flatMap(indicatorData, function (iData) { return iData.date; });
-        var datesToAdd = [];
-        var datesToUpdate = [];
-        return indicator_entity_1.IndicatorDataService.getIndicatorDataDates(customerId, indicatorId, dates)
-            .then(function onGetDates(response) {
-            for (var i = 0; i < dates.length; i++) {
-                var oldIndicator = _.find(response, _.matchesProperty('date', dates[i]));
-                var newIndicator = _.find(indicatorData, _.matchesProperty('date', dates[i]));
-                if (newIndicator.value === null) {
-                    continue;
-                }
-                if (oldIndicator) {
-                    // must UPDATE on the db
-                    oldIndicator.value = newIndicator.value;
-                    datesToUpdate.push(oldIndicator);
-                }
-                else {
-                    datesToAdd.push(newIndicator);
                 }
             }
-            var requests = [];
-            if (datesToAdd.length) {
-                requests.push(indicator_entity_1.IndicatorDataService.insertIndicatorData(datesToAdd));
-            }
-            for (var j = 0; j < datesToUpdate.length; j++) {
-                requests.push(indicator_entity_1.IndicatorDataService.updateIndicatorDataValue(customerId, datesToUpdate[j]));
-            }
-            return Promise.all(requests)
-                .then(function onSaveIndicators(response) {
-                return indicator_entity_1.IndicatorDataService.getIndicatorsLastSync([indicatorId])
-                    .then(function (indicatorSyncs) {
-                    return indicatorSyncs[0];
+            var dates = _.flatMap(indicatorData, function (iData) { return iData.date; });
+            var datesToAdd = [];
+            var datesToUpdate = [];
+            return indicator_entity_1.IndicatorDataService.getIndicatorDataDates(customerId, indicatorId, dates)
+                .then(function onGetDates(response) {
+                for (var i = 0; i < dates.length; i++) {
+                    var oldIndicator = _.find(response, _.matchesProperty('date', dates[i]));
+                    var newIndicator = _.find(indicatorData, _.matchesProperty('date', dates[i]));
+                    if (newIndicator.value === null) {
+                        continue;
+                    }
+                    if (oldIndicator) {
+                        // must UPDATE on the db
+                        oldIndicator.value = newIndicator.value;
+                        datesToUpdate.push(oldIndicator);
+                    }
+                    else {
+                        datesToAdd.push(newIndicator);
+                    }
+                }
+                var requests = [];
+                if (datesToAdd.length) {
+                    requests.push(indicator_entity_1.IndicatorDataService.insertIndicatorData(datesToAdd));
+                }
+                for (var j = 0; j < datesToUpdate.length; j++) {
+                    requests.push(indicator_entity_1.IndicatorDataService.updateIndicatorDataValue(customerId, datesToUpdate[j]));
+                }
+                return Promise.all(requests)
+                    .then(function onSaveIndicators(response) {
+                    return indicator_entity_1.IndicatorDataService.getIndicatorsLastSync([indicatorId])
+                        .then(function (indicatorSyncs) {
+                        return indicatorSyncs[0];
+                    });
                 });
             });
         });
@@ -348,7 +352,7 @@ var IndicatorService = (function () {
         if (!months.length) {
             return result;
         }
-        consolidateExpected = _.sumBy(months, 'expected');
+        consolidateExpected = _.sumBy(months, 'expected') || 1;
         if (indicator.datasource.columnOperation === shared_1.Operations.average) {
             consolidateExpected = consolidateExpected / months.length;
         }
