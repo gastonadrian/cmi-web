@@ -172,18 +172,8 @@ export class GoalDataService{
         };
 
         if(from && to){
-            removePerformanceParams.query["$or"] = [
-                {
-                    from: { '$gte': from },
-                    to: { '$lte': to }                    
-                },
-                {
-                    from: { '$gte': from }
-                },
-                {
-                    to: { '$lte': to }
-                }
-            ];
+            removePerformanceParams.query.from = { '$lte': from };
+            removePerformanceParams.query.to = { '$gte': to };
         }
 
         return mongoControl.remove(removePerformanceParams)

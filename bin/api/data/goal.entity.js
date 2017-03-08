@@ -144,8 +144,8 @@ var GoalDataService = (function () {
             }
         };
         if (from && to) {
-            removePerformanceParams.query.from = { '$gte': from };
-            removePerformanceParams.query.to = { '$lte': to };
+            removePerformanceParams.query.from = { '$lte': from };
+            removePerformanceParams.query.to = { '$gte': to };
         }
         return mongoControl.remove(removePerformanceParams)
             .then(function (response) {

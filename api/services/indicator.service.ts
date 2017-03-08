@@ -308,6 +308,9 @@ export class IndicatorService{
                         return moment(dateValue);
                     });
 
+                    console.log('min',moment.min(minmaxDateArray).toDate()); 
+                    console.log('max', moment.max(minmaxDateArray).toDate());
+                    
                     IndicatorDataService.removeCachedPerformance(indicator._id, moment.min(minmaxDateArray).toDate(), moment.max(minmaxDateArray).toDate());
                     for(var i = 0; i < indicator.goalIds.length; i++){
                         GoalService.removeCachedPerformance(indicator.goalIds[i], moment.min(minmaxDateArray).toDate(), moment.max(minmaxDateArray).toDate());

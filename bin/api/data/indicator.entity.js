@@ -307,18 +307,8 @@ var IndicatorDataService = (function () {
             }
         };
         if (from && to) {
-            goalIndicatorParams.query["$or"] = [
-                {
-                    from: { '$gte': from },
-                    to: { '$lte': to }
-                },
-                {
-                    from: { '$gte': from }
-                },
-                {
-                    to: { '$lte': to }
-                }
-            ];
+            goalIndicatorParams.query.from = { '$lte': from };
+            goalIndicatorParams.query.to = { '$gte': to };
         }
         return mongoControl.remove(goalIndicatorParams)
             .then(function (response) {
