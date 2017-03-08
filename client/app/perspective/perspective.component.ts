@@ -44,6 +44,7 @@ export class PerspectiveComponent implements OnInit, AfterViewInit{
       .subscribe(
         (goalId:any) => { 
           goal._id = goalId;
+          this.newGoals[perspectiveIndex] = '';
           this.perspectives[perspectiveIndex].goals.unshift(goal);
         },
         (error:any) => {
