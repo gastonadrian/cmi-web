@@ -171,8 +171,6 @@ var IndicatorService = (function () {
         });
     };
     IndicatorService.createIndicatorData = function (customerId, indicatorData) {
-        // guardamos el id
-        var indicatorId = indicatorData[0].indicatorId;
         //validar array vacio
         if (!indicatorData.length) {
             return new Promise(function (resolve, reject) {
@@ -182,6 +180,8 @@ var IndicatorService = (function () {
                 });
             });
         }
+        // guardamos el id
+        var indicatorId = indicatorData[0].indicatorId;
         return indicator_entity_1.IndicatorDataService.get(customerId, indicatorId)
             .then(function onIndicator(indicator) {
             // validar que todos los elementos del array tengan los datos seteados
