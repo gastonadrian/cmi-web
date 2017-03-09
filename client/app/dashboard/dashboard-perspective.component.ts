@@ -10,7 +10,7 @@ import { Observable } from "rxjs/Observable";
   moduleId: module.id,
   selector: 'dashboard-perspective',
   templateUrl: 'dashboard-perspective.template.html',
-  styles:['a{ color:#333; }']
+  styles:['a:not(.btn){ color:#333; }']
 })
 export class DashboardPerspectiveComponent implements OnChanges, AfterViewInit {
   
@@ -27,6 +27,7 @@ export class DashboardPerspectiveComponent implements OnChanges, AfterViewInit {
     }
     
     ngAfterViewInit(){
+        this.gaugeConfig.status = this.getGaugeStatusColour(this.perspective.performance.semaphoreStatus);
         this.gaugeConfigChangedSource.next(this.gaugeConfig);        
     }
 
@@ -41,13 +42,7 @@ export class DashboardPerspectiveComponent implements OnChanges, AfterViewInit {
     }
 
     getGaugeStatusColour(semaphoreValue:number):string{
-        let status = {
-            '0':'',
-            '1':'green',
-            '2':'yellow',
-            '3':'red'
-        };
-
+        let status = ['','green','yellow','red'];
         return status[semaphoreValue];
     }
 

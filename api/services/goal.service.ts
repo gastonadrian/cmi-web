@@ -145,27 +145,31 @@ export class GoalService {
 
         return Promise.all([
             GoalDataService.getByIds(customerId, [goalId]),
-            IndicatorService.getIndicatorsPerformance(customerId,[goalId], from, to)
+            IndicatorService.getComposedIndicatorsByGoalId(customerId, [goalId], from, to)
         ])
         .then(function onGet(values:Array<any>){
-           let mongoGoals:Array<GoalApiResult> = values[0];
-           let indicators:Array<IndicatorApiResult> = values[1];
-           return self.goalCalculator(customerId, mongoGoals, from, to)
-               .then(function onGoal(goals:GoalApiResult[]){
-                    goals[0].indicators = indicators;
+            let mongoGoals:Array<GoalApiResult> = values[0];
+            let indicators:Array<MongoIndicator> = values[1];
+            let indicatorsWithPerformance:Array<IndicatorApiResult> = IndicatorService.getIndicatorsPerformance(indicators, from, to);
+
+            return self.goalCalculator(customerId, mongoGoals, from, to)
+                .then(function onGoal(goals:GoalApiResult[]){
+                    goals[0].indicators = indicatorsWithPerformance;
                     return goals[0];
-               });
-        })
+                });
+        });
     }
 
     private static goalCalculator(customerId:string, mongoGoals:Array<GoalApiResult>, from:Date, to:Date):Promise<GoalApiResult[]>{
-        let goalIds:Array<string> = [],
+        console.time('5:goalCalculatorCached');
+        console.time('5:goalCalculatorNOCached');
+        let goalIds:Array<any> = [],
             result:Array<GoalApiResult> = [],
             self = this;
 
         // get the performance of all indicators inside the goals
-        goalIds = mongoGoals.map(function goalIdMap(goal:GoalApiResult){
-            return goal._id.toString();
+        goalIds = mongoGoals.map(function goalIdMap(goal:MongoGoal){
+            return goal._id;
         });
 
         return GoalDataService.getGoalPerformance(goalIds, from, to)
@@ -176,7 +180,7 @@ export class GoalService {
             goalIds = [];
 
             for(var i = 0; i< mongoGoals.length; i++){
-                let performanceProgress:GoalPerformanceBase = _.find(cachedPerformance, _.matchesProperty('goalId', mongoGoals[i]._id.toString()));
+                let performanceProgress:GoalPerformanceBase = _.find(cachedPerformance, _.matchesProperty('goalId', mongoGoals[i]._id));
                 
                 if(performanceProgress){
                     result.push(                     
@@ -187,56 +191,71 @@ export class GoalService {
                     );   
                 }
                 else{
-                    goalIds.push(mongoGoals[i]._id.toString());
+                    goalIds.push(mongoGoals[i]._id);
                 }
             }
 
             if(!goalIds.length){
+                console.timeEnd('5:goalCalculatorCached');
                 return result;
             }
 
-            return self.calculateGoalPerformance(customerId, goalIds, _.filter(mongoGoals, ( value:MongoGoal ) => {  return _.includes(goalIds, value._id.toString());  } ), from, to)
+            return self.calculateGoalPerformance(customerId, goalIds, _.filter(mongoGoals, ( value:MongoGoal ) => {  return _.includes(goalIds, value._id);  } ), from, to)
             .then(function goalApiResult(response:Array<GoalApiResult>){
+                console.timeEnd('5:goalCalculatorNOCached');
                 return result.concat(response);
             });
         });       
     }
 
-    static getGoalsPerformance(customerId:string, withIndicators:Boolean, from:Date, to:Date):Promise<Array<GoalApiResult>>{
-        let self = this;
-
-        return GoalDataService.getByCustomerId(customerId, true)
-        .then(function onGetGoals(mongoGoals:Array<GoalApiResult>){
-            return self.goalCalculator(customerId, mongoGoals, from, to);
-        });
+    static getGoalsPerformance(goals:Array<GoalApiResult>, withIndicators:Boolean, from:Date, to:Date):Promise<Array<GoalApiResult>>{
+        console.time('3:getGoalsPerformance');
+        if(!goals.length){
+            return new Promise(function (resolve, reject){
+                resolve(goals);
+                return goals;
+            });
+        }
+        return this.goalCalculator(goals[0].customerId.toString(), goals, from, to)
+            .then(function(response:any){
+                console.timeEnd('3:getGoalsPerformance');
+                return response;
+            });
     }
 
-    private static calculateGoalPerformance(customerId:string, goalIds:Array<string>, mongoGoals:MongoGoal[], from:Date, to:Date){
+    private static calculateGoalPerformance(customerId:string, goalIds:Array<any>, mongoGoals:MongoGoal[], from:Date, to:Date):Promise<GoalApiResult[]>{
+        console.time('7:calculateGoalPerformance');
         let indicators:Array<IndicatorApiResult>,
-            goalIndicatorSpec:Array<MongoGoalIndicator> = [],
+            goalIndicatorRelations:Array<MongoGoalIndicator> = [],
+            indicatorsWithPerformance:Array<IndicatorApiResult> = [],
             self = this;
             
-        return Promise.all([
-                IndicatorService.getIndicatorsPerformance(customerId, goalIds, from, to),
-                IndicatorService.getGoalIndicators(customerId, goalIds)
-            ]).then(function onIndicators(values:any){
-                indicators = values[0] as Array<IndicatorApiResult>;
-                goalIndicatorSpec = values[1] as Array<MongoGoalIndicator>;
+        return IndicatorService.getComposedIndicatorsByGoalId(customerId, goalIds, from, to)
+            .then(function onComposedIndicators(indicators:Array<MongoIndicator>){
+
+                indicatorsWithPerformance = IndicatorService.getIndicatorsPerformance(indicators, from, to);
+                    
+                goalIndicatorRelations = _.flatMap(indicators, (i:MongoIndicator) => { return i.goalIndicators; });
                 let goalsResponse:Array<GoalApiResult> = [];
+
+                console.log('indicators with performance',':  ' +  indicatorsWithPerformance.map( (gi:any) => { return gi._id.toString() }));
+
 
                 // calculate goal performance
                 for(var i = 0; i< mongoGoals.length; i++){
 
                     // take the factors from here
-                    var indicatorSpecs = _.filter(goalIndicatorSpec, _.matches({ goalId: mongoGoals[i]._id.toString() }));
+                    var goalIndicatorsSpec = _.filter(goalIndicatorRelations, _.matches({ goalId: mongoGoals[i]._id.toString() }));
         
+                    console.log(mongoGoals[i].title,':  '  + goalIndicatorsSpec.map( (gi:any) => { return gi.indicatorId.toString() }));
+
                     // take the indicators with performance from here
-                    var indicatorsWithPerformance = _.filter(indicators, function filterByGoal(ind){
-                        return _.includes(ind.goalIds, mongoGoals[i]._id.toString())
+                    var goalIndicators = _.filter(indicatorsWithPerformance, function filterByGoal(ind){
+                        return !!_.find(ind.goalIds, mongoGoals[i]._id)
                     });
-            
-                    let performance:GoalPerformanceBase = self.calculateGoalPerformanceProgress(mongoGoals[i], indicatorsWithPerformance, indicatorSpecs, from, to);                    
                     
+                    let performance:GoalPerformanceBase = self.calculateGoalPerformanceProgress(mongoGoals[i], goalIndicators, goalIndicatorsSpec, from, to);                    
+                                        
                     GoalDataService.insertGoalPerformance(performance);
                     
                     goalsResponse.push(                     
@@ -246,14 +265,17 @@ export class GoalService {
                         }) as GoalApiResult
                     );   
                 }
+
+                console.timeEnd('7:calculateGoalPerformance');
                 return goalsResponse;
+           
             });
     }
     private static calculateGoalPerformanceProgress(goal:MongoGoal, indicators:Array<IndicatorApiResult>, indicatorFactors:Array<MongoGoalIndicator>, from, to):GoalPerformanceBase{
         let unitPercentage:number = 1 / _.sumBy(indicatorFactors, 'factor');
         let indicatorsHelper:any[] = []; 
         let result:GoalPerformanceBase = {
-            goalId: goal._id.toString(),
+            goalId: goal._id,
             from: from,
             to:  to,
             progressPerformance: [],
@@ -265,8 +287,18 @@ export class GoalService {
             }
         };
 
+        if(!indicators.length){
+            return result;
+        }
+
         for(var i=0; i < indicators.length; i++){
-            var goalIndicator = indicatorFactors.find( (goalInd: MongoGoalIndicator, index: number) =>{ return goalInd.indicatorId == indicators[i]._id }  );
+            var goalIndicator = indicatorFactors.find( 
+                (goalInd: MongoGoalIndicator, index: number) =>{ 
+                    return goalInd.indicatorId.toString() == indicators[i]._id.toString() 
+                }  );
+            if(!goalIndicator){
+                continue;
+            }
             indicatorsHelper.push({
                 index:i,
                 indicator: indicators[i],
@@ -315,10 +347,6 @@ export class GoalService {
             else{
                 result.semaphoreStatus = SemaphoreStatus.yellow;
             }
-        }
-
-        if(result.value > 1){
-            result.value = 1;
         }
 
         if(result.value < 0){

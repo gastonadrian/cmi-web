@@ -15,11 +15,13 @@ export class PerspectiveService{
     }
 
     static getDashboard(customerId:string, from:Date, to:Date):Promise<any>{
+        console.time('1:dashboard');
         let period:any = utils.getPeriodFromParams( from, to );
 
         // desired result
         return this.getPerspectivesWithPerformance(customerId, true, period.from, period.to)
             .then(function(perspectives){
+                console.timeEnd('1:dashboard');                
                 return {
                     filterDateFrom: period.from,
                     filterDateTo: period.to,
@@ -29,23 +31,10 @@ export class PerspectiveService{
     }
     
     static getAll(customerId:string, withGoals:Boolean):Promise<Array<PerspectiveApiResult>>{
-        return Promise.all([
-            PerspectiveDataService.getPerspectives(customerId),
-            GoalService.getByCustomerId(customerId)
-        ]).then(function onBothPromisesResult(values:any){
-            let perspectives:Array<MongoPerspective> = values[0] as Array<MongoPerspective>;
-            let goals:Array<MongoGoal> = values[1] as Array<MongoGoal>;
-            let result:Array<PerspectiveApiResult> = [];
-
-            for(var i=0; i< perspectives.length; i++){
-                let perspectiveGoals:Array<MongoGoal> = _.filter(goals, _.matchesProperty('perspectiveId', perspectives[i]._id.toString()));
-                result.push(_.extend(perspectives[i],{
-                     goals: perspectiveGoals as Array<GoalApiResult>
-                }) as PerspectiveApiResult);
-            }
-
-            return result;
-        });
+         return PerspectiveDataService.getPerspectives(customerId)
+            .then(function (perspectives:Array<PerspectiveApiResult>) {
+                return perspectives;
+            });
     }
 
     static save(customerId:string, perspectives:Array<PerspectiveApiResult>):Promise<any[]>{
@@ -66,29 +55,31 @@ export class PerspectiveService{
         return Promise.all(perspectiveArray);
     }
 
-    private static getPerspectivesWithPerformance(customerId:string, withPerformance:Boolean, from: Date, to:Date):Promise<Array<PerspectiveApiResult>>{
+    private static getPerspectivesWithPerformance(customerId:string, withPerformance:Boolean, from: Date, to:Date):Promise<any>{
+        console.time('2:getPerspectivesWithPerformance');
         let self = this;
 
-        return Promise.all([
-            GoalService.getGoalsPerformance(customerId, false, from, to),
-            PerspectiveDataService.getPerspectives(customerId)
-        ]).then(function onBothPromisesResult(values:any){
-            let goals:Array<GoalApiResult> = values[0] as Array<GoalApiResult>;
-            let perspectives:Array<MongoPerspective> = values[1] as Array<MongoPerspective>;
-    
-            let result:Array<PerspectiveApiResult> = [];
-            
-            for (var index = 0; index < perspectives.length; index++) {
-                let perspectiveGoals = _.filter(goals, _.matchesProperty('perspectiveId', perspectives[index]._id.toString()));
-                
-                result.push(_.extend(perspectives[index], {
-                    goals: perspectiveGoals,
-                    performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals, to)
-                }) as PerspectiveApiResult);
-            }
-            return result;
+        return PerspectiveDataService.getPerspectives(customerId)
+            .then(function (perspectives:Array<PerspectiveApiResult>) {
+                let goals:Array<GoalApiResult> = _.flatMap(perspectives, (p:PerspectiveApiResult) => { return p.goals });
 
-        });
+                return GoalService.getGoalsPerformance(goals, false, from, to)
+                    .then(function onGetPerformance(goalsWithPerformance){
+                        let result:Array<PerspectiveApiResult> = [];
+
+                        for (var index = 0; index < perspectives.length; index++) {
+                            let perspectiveGoalIds:any[] = _.map(perspectives[index].goals, (g:GoalApiResult) => { return g._id });
+                            let perspectiveGoals = _.filter(goalsWithPerformance, (g:GoalApiResult) => { return _.includes(perspectiveGoalIds, g._id); });
+                            
+                            result.push(_.extend(perspectives[index], {
+                                goals: perspectiveGoals,
+                                performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals, to)
+                            }) as PerspectiveApiResult);
+                        }
+                        console.timeEnd('2:getPerspectivesWithPerformance');
+                        return result;
+                    });
+            });
     }
 
     private static calculatePerspectivePerformance(perspective:MongoPerspective, goals:Array<GoalApiResult>, to:Date):IPerformance{

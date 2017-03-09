@@ -123,6 +123,18 @@ const appRoutes: Routes = [
       showPeriods:false
     }
   },
+  {
+    path: 'goals/create', 
+    component: GoalCreateComponent,
+    data:{
+      title:'Objetivos',
+      description:'Crear Objetivo'
+    },
+    resolve:{
+      perspectives: PerspectiveResolver,
+      indicators: IndicatorResolver
+    }
+  },
   { 
     path: 'goals/configure/:goalid', 
     component: GoalCreateComponent,

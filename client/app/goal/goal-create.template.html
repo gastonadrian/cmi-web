@@ -28,8 +28,8 @@
                         <input type="number" [(ngModel)]="goal.semaphore.yellowUntil" class="form-control" name="yellowUntil" required #yellowUntil="ngModel">
                         <p class="help-block" [hidden]="yellowUntil.valid || yellowUntil.pristine">Este campo es requerido.</p>
                     </div>
-                    <h3>Indicadores del objetivo</h3>
-                    <table #goalIndicatorsTable class="table table-bordered table-hover">
+                    <h3 *ngIf="goal._id">Indicadores del objetivo</h3>
+                    <table #goalIndicatorsTable  *ngIf="goal._id" class="table table-bordered table-hover">
                         <thead>
                             <tr>
                                 <th>Nombre</th>
@@ -51,8 +51,8 @@
                             </tr>                            
                         </tbody>
                     </table>
-                    <h3>Indicadores en el sistema</h3>
-                    <table #indicatorsTable class="table table-bordered table-hover">
+                    <h3 *ngIf="goal._id">Indicadores en el sistema</h3>
+                    <table #indicatorsTable *ngIf="goal._id" class="table table-bordered table-hover">
                         <thead>
                             <tr>
                                 <th>Nombre</th>

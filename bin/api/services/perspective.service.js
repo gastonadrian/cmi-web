@@ -8,10 +8,12 @@ var PerspectiveService = (function () {
     function PerspectiveService() {
     }
     PerspectiveService.getDashboard = function (customerId, from, to) {
+        console.time('1:dashboard');
         var period = utils.getPeriodFromParams(from, to);
         // desired result
         return this.getPerspectivesWithPerformance(customerId, true, period.from, period.to)
             .then(function (perspectives) {
+            console.timeEnd('1:dashboard');
             return {
                 filterDateFrom: period.from,
                 filterDateTo: period.to,
@@ -20,20 +22,9 @@ var PerspectiveService = (function () {
         });
     };
     PerspectiveService.getAll = function (customerId, withGoals) {
-        return Promise.all([
-            perspective_entity_1.PerspectiveDataService.getPerspectives(customerId),
-            goal_service_1.GoalService.getByCustomerId(customerId)
-        ]).then(function onBothPromisesResult(values) {
-            var perspectives = values[0];
-            var goals = values[1];
-            var result = [];
-            for (var i = 0; i < perspectives.length; i++) {
-                var perspectiveGoals = _.filter(goals, _.matchesProperty('perspectiveId', perspectives[i]._id.toString()));
-                result.push(_.extend(perspectives[i], {
-                    goals: perspectiveGoals
-                }));
-            }
-            return result;
+        return perspective_entity_1.PerspectiveDataService.getPerspectives(customerId)
+            .then(function (perspectives) {
+            return perspectives;
         });
     };
     PerspectiveService.save = function (customerId, perspectives) {
@@ -52,22 +43,28 @@ var PerspectiveService = (function () {
         return Promise.all(perspectiveArray);
     };
     PerspectiveService.getPerspectivesWithPerformance = function (customerId, withPerformance, from, to) {
+        console.time('2:getPerspectivesWithPerformance');
         var self = this;
-        return Promise.all([
-            goal_service_1.GoalService.getGoalsPerformance(customerId, false, from, to),
-            perspective_entity_1.PerspectiveDataService.getPerspectives(customerId)
-        ]).then(function onBothPromisesResult(values) {
-            var goals = values[0];
-            var perspectives = values[1];
-            var result = [];
-            for (var index = 0; index < perspectives.length; index++) {
-                var perspectiveGoals = _.filter(goals, _.matchesProperty('perspectiveId', perspectives[index]._id.toString()));
-                result.push(_.extend(perspectives[index], {
-                    goals: perspectiveGoals,
-                    performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals, to)
-                }));
-            }
-            return result;
+        return perspective_entity_1.PerspectiveDataService.getPerspectives(customerId)
+            .then(function (perspectives) {
+            var goals = _.flatMap(perspectives, function (p) { return p.goals; });
+            return goal_service_1.GoalService.getGoalsPerformance(goals, false, from, to)
+                .then(function onGetPerformance(goalsWithPerformance) {
+                var result = [];
+                var _loop_1 = function () {
+                    var perspectiveGoalIds = _.map(perspectives[index].goals, function (g) { return g._id; });
+                    var perspectiveGoals = _.filter(goalsWithPerformance, function (g) { return _.includes(perspectiveGoalIds, g._id); });
+                    result.push(_.extend(perspectives[index], {
+                        goals: perspectiveGoals,
+                        performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals, to)
+                    }));
+                };
+                for (var index = 0; index < perspectives.length; index++) {
+                    _loop_1();
+                }
+                console.timeEnd('2:getPerspectivesWithPerformance');
+                return result;
+            });
         });
     };
     PerspectiveService.calculatePerspectivePerformance = function (perspective, goals, to) {

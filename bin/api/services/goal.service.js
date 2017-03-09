@@ -102,23 +102,26 @@ var GoalService = (function () {
         var self = this;
         return Promise.all([
             goal_entity_1.GoalDataService.getByIds(customerId, [goalId]),
-            indicator_service_1.IndicatorService.getIndicatorsPerformance(customerId, [goalId], from, to)
+            indicator_service_1.IndicatorService.getComposedIndicatorsByGoalId(customerId, [goalId], from, to)
         ])
             .then(function onGet(values) {
             var mongoGoals = values[0];
             var indicators = values[1];
+            var indicatorsWithPerformance = indicator_service_1.IndicatorService.getIndicatorsPerformance(indicators, from, to);
             return self.goalCalculator(customerId, mongoGoals, from, to)
                 .then(function onGoal(goals) {
-                goals[0].indicators = indicators;
+                goals[0].indicators = indicatorsWithPerformance;
                 return goals[0];
             });
         });
     };
     GoalService.goalCalculator = function (customerId, mongoGoals, from, to) {
+        console.time('5:goalCalculatorCached');
+        console.time('5:goalCalculatorNOCached');
         var goalIds = [], result = [], self = this;
         // get the performance of all indicators inside the goals
         goalIds = mongoGoals.map(function goalIdMap(goal) {
-            return goal._id.toString();
+            return goal._id;
         });
         return goal_entity_1.GoalDataService.getGoalPerformance(goalIds, from, to)
             .then(function (cachedPerformance) {
@@ -126,7 +129,7 @@ var GoalService = (function () {
             // that are not cached
             goalIds = [];
             for (var i = 0; i < mongoGoals.length; i++) {
-                var performanceProgress = _.find(cachedPerformance, _.matchesProperty('goalId', mongoGoals[i]._id.toString()));
+                var performanceProgress = _.find(cachedPerformance, _.matchesProperty('goalId', mongoGoals[i]._id));
                 if (performanceProgress) {
                     result.push(_.extend(mongoGoals[i], {
                         performance: performanceProgress,
@@ -134,49 +137,60 @@ var GoalService = (function () {
                     }));
                 }
                 else {
-                    goalIds.push(mongoGoals[i]._id.toString());
+                    goalIds.push(mongoGoals[i]._id);
                 }
             }
             if (!goalIds.length) {
+                console.timeEnd('5:goalCalculatorCached');
                 return result;
             }
-            return self.calculateGoalPerformance(customerId, goalIds, _.filter(mongoGoals, function (value) { return _.includes(goalIds, value._id.toString()); }), from, to)
+            return self.calculateGoalPerformance(customerId, goalIds, _.filter(mongoGoals, function (value) { return _.includes(goalIds, value._id); }), from, to)
                 .then(function goalApiResult(response) {
+                console.timeEnd('5:goalCalculatorNOCached');
                 return result.concat(response);
             });
         });
     };
-    GoalService.getGoalsPerformance = function (customerId, withIndicators, from, to) {
-        var self = this;
-        return goal_entity_1.GoalDataService.getByCustomerId(customerId, true)
-            .then(function onGetGoals(mongoGoals) {
-            return self.goalCalculator(customerId, mongoGoals, from, to);
+    GoalService.getGoalsPerformance = function (goals, withIndicators, from, to) {
+        console.time('3:getGoalsPerformance');
+        if (!goals.length) {
+            return new Promise(function (resolve, reject) {
+                resolve(goals);
+                return goals;
+            });
+        }
+        return this.goalCalculator(goals[0].customerId.toString(), goals, from, to)
+            .then(function (response) {
+            console.timeEnd('3:getGoalsPerformance');
+            return response;
         });
     };
     GoalService.calculateGoalPerformance = function (customerId, goalIds, mongoGoals, from, to) {
-        var indicators, goalIndicatorSpec = [], self = this;
-        return Promise.all([
-            indicator_service_1.IndicatorService.getIndicatorsPerformance(customerId, goalIds, from, to),
-            indicator_service_1.IndicatorService.getGoalIndicators(customerId, goalIds)
-        ]).then(function onIndicators(values) {
-            indicators = values[0];
-            goalIndicatorSpec = values[1];
+        console.time('7:calculateGoalPerformance');
+        var indicators, goalIndicatorRelations = [], indicatorsWithPerformance = [], self = this;
+        return indicator_service_1.IndicatorService.getComposedIndicatorsByGoalId(customerId, goalIds, from, to)
+            .then(function onComposedIndicators(indicators) {
+            indicatorsWithPerformance = indicator_service_1.IndicatorService.getIndicatorsPerformance(indicators, from, to);
+            goalIndicatorRelations = _.flatMap(indicators, function (i) { return i.goalIndicators; });
             var goalsResponse = [];
+            console.log('indicators with performance', ':  ' + indicatorsWithPerformance.map(function (gi) { return gi._id.toString(); }));
             // calculate goal performance
             for (var i = 0; i < mongoGoals.length; i++) {
                 // take the factors from here
-                var indicatorSpecs = _.filter(goalIndicatorSpec, _.matches({ goalId: mongoGoals[i]._id.toString() }));
+                var goalIndicatorsSpec = _.filter(goalIndicatorRelations, _.matches({ goalId: mongoGoals[i]._id.toString() }));
+                console.log(mongoGoals[i].title, ':  ' + goalIndicatorsSpec.map(function (gi) { return gi.indicatorId.toString(); }));
                 // take the indicators with performance from here
-                var indicatorsWithPerformance = _.filter(indicators, function filterByGoal(ind) {
-                    return _.includes(ind.goalIds, mongoGoals[i]._id.toString());
+                var goalIndicators = _.filter(indicatorsWithPerformance, function filterByGoal(ind) {
+                    return !!_.find(ind.goalIds, mongoGoals[i]._id);
                 });
-                var performance = self.calculateGoalPerformanceProgress(mongoGoals[i], indicatorsWithPerformance, indicatorSpecs, from, to);
+                var performance = self.calculateGoalPerformanceProgress(mongoGoals[i], goalIndicators, goalIndicatorsSpec, from, to);
                 goal_entity_1.GoalDataService.insertGoalPerformance(performance);
                 goalsResponse.push(_.extend(mongoGoals[i], {
                     performance: performance,
                     indicators: []
                 }));
             }
+            console.timeEnd('7:calculateGoalPerformance');
             return goalsResponse;
         });
     };
@@ -184,7 +198,7 @@ var GoalService = (function () {
         var unitPercentage = 1 / _.sumBy(indicatorFactors, 'factor');
         var indicatorsHelper = [];
         var result = {
-            goalId: goal._id.toString(),
+            goalId: goal._id,
             from: from,
             to: to,
             progressPerformance: [],
@@ -195,8 +209,16 @@ var GoalService = (function () {
                 date: to
             }
         };
+        if (!indicators.length) {
+            return result;
+        }
         for (var i = 0; i < indicators.length; i++) {
-            var goalIndicator = indicatorFactors.find(function (goalInd, index) { return goalInd.indicatorId == indicators[i]._id; });
+            var goalIndicator = indicatorFactors.find(function (goalInd, index) {
+                return goalInd.indicatorId.toString() == indicators[i]._id.toString();
+            });
+            if (!goalIndicator) {
+                continue;
+            }
             indicatorsHelper.push({
                 index: i,
                 indicator: indicators[i],
@@ -238,9 +260,6 @@ var GoalService = (function () {
             else {
                 result.semaphoreStatus = shared_1.SemaphoreStatus.yellow;
             }
-        }
-        if (result.value > 1) {
-            result.value = 1;
         }
         if (result.value < 0) {
             result.value = 0;

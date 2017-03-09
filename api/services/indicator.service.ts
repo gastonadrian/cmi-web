@@ -56,8 +56,12 @@ export class IndicatorService{
         return IndicatorDataService.getGoalIndicators(customerId, goalIds);
     }
 
-    static getIndicatorsByGoalId(customerId:string, goalIds:Array<string>):Promise<Array<MongoIndicator>>{
-        return IndicatorDataService.getAllByGoalIds(customerId, goalIds);        
+    static getIndicatorsByGoalId(customerId:string, goalIds:Array<any>):Promise<Array<MongoIndicator>>{
+        return IndicatorDataService.getByGoalIds(customerId, goalIds);        
+    }
+
+    static getComposedIndicatorsByGoalId(customerId:string, goalIds:Array<any>, from, to):Promise<Array<MongoIndicator>>{
+        return IndicatorDataService.getAllByGoalIds(customerId, goalIds, from, to);        
     }
 
     /**
@@ -69,78 +73,38 @@ export class IndicatorService{
      * @param {any} to
      * @returns
      */
-    static getIndicatorsPerformance(customerId:string, goalIds:Array<string>, from:Date, to:Date):Promise<Array<IndicatorApiResult>>{
-
-        let indicatorIds:Array<string> = [];
+    static getIndicatorsPerformance(indicators:Array<MongoIndicator>, from:Date, to:Date):Array<IndicatorApiResult>{
+        console.time('8.1:getIndicatorsPerformanceCached');
+        console.time('8.1:getIndicatorsPerformanceNOCached');
         let indicatorsResult:Array<IndicatorApiResult> = [];
-        let self = this;
 
-        return IndicatorDataService.getAllByGoalIds(customerId, goalIds).then(function onGetIndicators(indicators: Array<MongoIndicator>){
+        for(var i = 0; i< indicators.length; i++){
+            let performance:IndicatorPerformanceBase = this.filterPerformanceDates(indicators[i], from, to);
             
-            indicatorIds = indicators.map(function mapIndicatorId(indicator:MongoIndicator){
-                return indicator._id.toString();
-            });
+            if(!performance){                     
+                performance = this.calculateIndicatorPerformance(indicators[i], indicators[i].indicatorData, from, to );    
+                IndicatorDataService.insertPerformance(performance);
+            }
 
-            return IndicatorDataService.getPerformance(indicatorIds, from, to)
-            .then(function onPerformance(cachedPerformance:Array<IndicatorPerformanceBase>){
+            indicatorsResult.push(                     
+                _.extend(indicators[i], { 
+                    performance: performance
+                }) as IndicatorApiResult
+            );   
+        }
 
-                // we reset the goalids, because we want to ask later for those goals
-                // that are not cached
-                indicatorIds = [];
-
-                for(var i = 0; i< indicators.length; i++){
-                    let performance:IndicatorPerformanceBase = _.find(cachedPerformance, _.matchesProperty('indicatorId', indicators[i]._id.toString()));
-                    
-                    if(performance){
-                                                
-                        indicatorsResult.push(                     
-                            _.extend(indicators[i], { 
-                                performance: performance
-                            }) as IndicatorApiResult
-                        );   
-
-                    }
-                    else{
-                        indicatorIds.push(indicators[i]._id.toString());
-                    }
-                }
-
-                if(!indicatorIds.length){
-                    return indicatorsResult;
-                }
-
-                return self.calculateSeveralPerformance(customerId, indicatorIds, _.filter(indicators, ( value:MongoIndicator ) => {  return _.includes(indicatorIds, value._id.toString());  } ), from, to)
-                    .then(function goalApiResult(response:Array<IndicatorApiResult>){
-                        return indicatorsResult.concat(response);
-                    });
-
-            });
-
-            
-
-        });
+        console.timeEnd('8.1:getIndicatorsPerformanceNOCached');                    
+        return indicatorsResult;
+        
     }
 
-    // get indicator data and expectedvalues
-    private static calculateSeveralPerformance(customerId, indicatorIds, indicators:Array<MongoIndicator>, from:Date, to:Date):Promise<Array<IndicatorApiResult>>{
-        let result:Array<IndicatorApiResult> = [],
-            self = this;
-
-        return IndicatorDataService.getIndicatorsDataBetween(customerId, indicatorIds, from, to).then(function onGetIndicatorsData(indicatorsData:Array<MongoIndicatorData>){
-            //calculate performance for each indicator
-            for(var i = 0; i < indicators.length; i++){
-                let performance:IndicatorPerformanceBase = self.calculateIndicatorPerformance(indicators[i], _.filter(indicatorsData, _.matches({ indicatorId: indicators[i]._id.toString() })), from, to );
-
-                IndicatorDataService.insertPerformance(performance);
-
-                result.push(_.extend(indicators[i], 
-                    {
-                        performance: performance,
-                    }) as IndicatorApiResult);
+    private static filterPerformanceDates(indicator:MongoIndicator, from:Date, to:Date):IndicatorPerformanceBase{
+        for(var i=0; i < indicator.performances.length; i++){
+            if(!moment(indicator.performances[i].from).diff(from, 'minutes') && !moment(indicator.performances[i].to).diff(to, 'minutes')){
+                return indicator.performances[i];
             }
-            return result;    
-        });
-
+        }
+        return null;
     }
 
 
@@ -326,67 +290,12 @@ export class IndicatorService{
                                 });
                             });
                 });
-
-
-
-
-
         });
     }
 
     static getAllIndicatorData(customerId:string, indicatorId:string):Promise<any>{
         return IndicatorDataService.getIndicatorsDataBetween(customerId, [indicatorId]);
     }
-
-    // static setQuarterExpectation(customerId:string, indicatorId:string, quarter:IExpectation){
-    //     let startOfQuarter:Date = moment(quarter.date).startOf('quarter').toDate();
-    //     let endOfQuarter:Date = moment(quarter.date).endOf('quarter').subtract(1, 'second').toDate();
-    //     let self = this;
-
-    //     return Promise.all([
-    //         IndicatorDataService.get(customerId, indicatorId),
-    //         IndicatorDataService.getIndicatorsDataBetween(customerId, [indicatorId], startOfQuarter, endOfQuarter)
-    //     ]).then(function onResponseAll(values:Array<any>){
-    //             // detalles del indicador solicitado
-    //             let indicator:MongoIndicator = values[0];
-    //             let indicatorsData:Array<MongoIndicatorData> = values[1];
-
-    //             // first we need to calculate the month value for the indicator
-    //                 // si la operacion es promediar =>  el valor es el mismo
-    //             if(indicator.datasource.columnOperation !== Operations.average){
-    //                 // cualquier otra operacion => el  valor se divide en la cantidad de meses
-    //                 quarter.value = quarter.value / 3;
-    //             }
-
-    //             // si ya hay datos importados cargados para este periodo
-    //             if(indicatorsData.length){
-                    
-    //                 // update indicator data with expectation
-    //                 let promiseArray:Array<Promise<any>> = [];
-    //                 for(var i=0; i < indicatorsData.length; i++){
-    //                     promiseArray.push(IndicatorDataService.updateIndicatorData(customerId, indicatorId, indicatorsData[i].date, quarter.value ));                    
-    //                 }
-    
-    //                 return Promise.all(promiseArray)
-    //                     .then(function (values:Array<any>){
-    //                         let isOk:boolean = true;
-    //                         for(var j=0; j < values.length; j++){
-    //                             isOk = isOk && values[j].ok;
-    //                         }
-    //                         return { ok: isOk };
-    //                     });
-    //             }
-
-    //             // if there aren't import, create empty imports with expect value set
-    //             let newIndicatorsData:Array<MongoIndicatorData> = self.createEmptyIndicatorData(customerId, indicatorId, quarter.value, startOfQuarter, endOfQuarter);
-    //             return IndicatorDataService.insertIndicatorData(newIndicatorsData)
-    //                 .then(function onInsert(response){
-    //                     return {
-    //                         ok: !!response.insertedIds.length
-    //                     }
-    //                 });
-    //         });        
-    // }
 
     static update(customerId:string, indicator:MongoIndicator){
         let currentActive:Boolean = indicator.active,
@@ -462,7 +371,7 @@ export class IndicatorService{
         
         let oneUnitPercentageValue:number = 0;
         let result:IndicatorPerformanceBase = {
-            indicatorId: indicator._id.toString(),
+            indicatorId: indicator._id,
             from: from,
             to:  to,
             unitValue: 0,
@@ -522,10 +431,6 @@ export class IndicatorService{
             result.value = this.calculateLessThanPercentage(indicator, value, expected);
         } else {
             result.value = this.calculateEqualsToPercentage(indicator, value, expected);
-        }
-
-        if(result.value > 1){
-            result.value = 1;
         }
 
         if(result.value < 0){

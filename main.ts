@@ -30,6 +30,11 @@ let seneca:SENECA.Instance = SENECA();
 // let utils = utilsModule();
 let app:any = express();
 let senecaWebConfig:any = {
+    transport:{
+    tcp:{
+        timeout:20000
+    }
+    },
     context: context,
     adapter: require('seneca-web-adapter-express'),
     auth: passport,
@@ -56,7 +61,8 @@ seneca
         port: process.env.MONGO_PORT,
         username: process.env.MONGO_USER,
         password: process.env.MONGO_PASSWORD,
-        options: {}
+        options: {
+        }
      } )
     .use( senecaBasic )
     .use( senecaEntity, {

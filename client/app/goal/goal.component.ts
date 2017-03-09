@@ -30,8 +30,6 @@ export class GoalComponent implements OnInit, AfterViewInit, OnDestroy{
   private lineChartConfigChangedSource:Subject<LineChartConfig> = new Subject<LineChartConfig>();
   public lineChartConfigChanged$:Observable<LineChartConfig> = this.lineChartConfigChangedSource.asObservable();
 
-  
-
   constructor( 
     private route: ActivatedRoute,
     private router: Router,
@@ -47,6 +45,10 @@ export class GoalComponent implements OnInit, AfterViewInit, OnDestroy{
             (data:GoalApiResult) =>{
       
               this.goal = data;
+              for(var i =0; i < this.goal.indicators.length; i++){
+                this.goal.indicators[i].title = `${this.goal.indicators[i].title} (${this.getPercentageLabel(this.goal.indicators[i].performance.periodPerformance.value)}%)`;
+              }
+                    
               let datasetValues = this.goal.performance.progressPerformance.map( (data:IPerformance) => {
                     return { x: moment(data.date).toDate().getTime(), y: data.value*100 };
                   });
@@ -58,6 +60,11 @@ export class GoalComponent implements OnInit, AfterViewInit, OnDestroy{
     });      
 
   }
+ 
+ getPercentageLabel(rawValue:number):string{
+  let percentage:string = (Math.round(rawValue*100 * 100) / 100).toString();
+  return parseFloat(percentage).toFixed(2).toString();   
+ }
 
   getSemaphoreStatusColour(semaphoreValue:number):string{
     return AppSettings.semaphoreStatusText[semaphoreValue];
@@ -72,6 +79,11 @@ export class GoalComponent implements OnInit, AfterViewInit, OnDestroy{
     this.route.data
       .subscribe((data:any) => {        
         this.goal = data.goal;
+
+        for(var i =0; i < this.goal.indicators.length; i++){
+            this.goal.indicators[i].title = `${this.goal.indicators[i].title} (${this.getPercentageLabel(this.goal.indicators[i].performance.periodPerformance.value)}%)`;
+        }
+
         let datasetValues = this.goal.performance.progressPerformance.map( (data:IPerformance) => {
               return { x: moment(data.date).toDate().getTime(), y: data.value*100 };
             });

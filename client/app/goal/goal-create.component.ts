@@ -60,7 +60,12 @@ export class GoalCreateComponent implements OnInit, AfterViewInit{
   ngOnInit(){
     this.route.data
       .subscribe((data:any) => {
+        console.log(data.perspectiveId);
+        if(!data.goal){
+          data.goal = new GoalApiResult();
+        }
         this.goal = data.goal;  
+
         if(this.goal.semaphore){
           this.goal.semaphore = {
             redUntil: this.goal.semaphore.redUntil *100,
@@ -68,7 +73,9 @@ export class GoalCreateComponent implements OnInit, AfterViewInit{
           };
         }
         this.perspectives = data.perspectives;
-        this.removeGoalIndicatorsFromSystemIndicators(data.indicators);
+        if(this.goal._id){
+          this.removeGoalIndicatorsFromSystemIndicators(data.indicators);          
+        }
      });
   }
 
@@ -86,17 +93,34 @@ export class GoalCreateComponent implements OnInit, AfterViewInit{
   }
 
   onSubmit(){
-    this.goalService.update(this.goal)
-        .subscribe(
-        (ok:any) => { 
-          if(ok){
-            this.router.navigateByUrl('/dashboard');
+  
+    if(this.goal._id){
+      this.goalService.update(this.goal)
+          .subscribe(
+          (ok:any) => { 
+            if(ok){
+              this.router.navigateByUrl('/dashboard');
+            }
+          },
+          (error:any) => {
+              this.errorMessage = error;
           }
+        );
+    } else {
+      this.goalService.save(this.goal)
+      .subscribe(
+        (goalId:any) => { 
         },
         (error:any) => {
-            this.errorMessage = error;
+            console.log('error', error);
+        },
+        () => {
+            this.router.navigateByUrl('/perspectives');
         }
       );
+    }
+
+
   }
 
   refreshTables(){

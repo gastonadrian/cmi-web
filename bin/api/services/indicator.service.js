@@ -34,7 +34,10 @@ var IndicatorService = (function () {
         return indicator_entity_1.IndicatorDataService.getGoalIndicators(customerId, goalIds);
     };
     IndicatorService.getIndicatorsByGoalId = function (customerId, goalIds) {
-        return indicator_entity_1.IndicatorDataService.getAllByGoalIds(customerId, goalIds);
+        return indicator_entity_1.IndicatorDataService.getByGoalIds(customerId, goalIds);
+    };
+    IndicatorService.getComposedIndicatorsByGoalId = function (customerId, goalIds, from, to) {
+        return indicator_entity_1.IndicatorDataService.getAllByGoalIds(customerId, goalIds, from, to);
     };
     /**
      *
@@ -45,54 +48,30 @@ var IndicatorService = (function () {
      * @param {any} to
      * @returns
      */
-    IndicatorService.getIndicatorsPerformance = function (customerId, goalIds, from, to) {
-        var indicatorIds = [];
+    IndicatorService.getIndicatorsPerformance = function (indicators, from, to) {
+        console.time('8.1:getIndicatorsPerformanceCached');
+        console.time('8.1:getIndicatorsPerformanceNOCached');
         var indicatorsResult = [];
-        var self = this;
-        return indicator_entity_1.IndicatorDataService.getAllByGoalIds(customerId, goalIds).then(function onGetIndicators(indicators) {
-            indicatorIds = indicators.map(function mapIndicatorId(indicator) {
-                return indicator._id.toString();
-            });
-            return indicator_entity_1.IndicatorDataService.getPerformance(indicatorIds, from, to)
-                .then(function onPerformance(cachedPerformance) {
-                // we reset the goalids, because we want to ask later for those goals
-                // that are not cached
-                indicatorIds = [];
-                for (var i = 0; i < indicators.length; i++) {
-                    var performance = _.find(cachedPerformance, _.matchesProperty('indicatorId', indicators[i]._id.toString()));
-                    if (performance) {
-                        indicatorsResult.push(_.extend(indicators[i], {
-                            performance: performance
-                        }));
-                    }
-                    else {
-                        indicatorIds.push(indicators[i]._id.toString());
-                    }
-                }
-                if (!indicatorIds.length) {
-                    return indicatorsResult;
-                }
-                return self.calculateSeveralPerformance(customerId, indicatorIds, _.filter(indicators, function (value) { return _.includes(indicatorIds, value._id.toString()); }), from, to)
-                    .then(function goalApiResult(response) {
-                    return indicatorsResult.concat(response);
-                });
-            });
-        });
-    };
-    // get indicator data and expectedvalues
-    IndicatorService.calculateSeveralPerformance = function (customerId, indicatorIds, indicators, from, to) {
-        var result = [], self = this;
-        return indicator_entity_1.IndicatorDataService.getIndicatorsDataBetween(customerId, indicatorIds, from, to).then(function onGetIndicatorsData(indicatorsData) {
-            //calculate performance for each indicator
-            for (var i = 0; i < indicators.length; i++) {
-                var performance = self.calculateIndicatorPerformance(indicators[i], _.filter(indicatorsData, _.matches({ indicatorId: indicators[i]._id.toString() })), from, to);
+        for (var i = 0; i < indicators.length; i++) {
+            var performance = this.filterPerformanceDates(indicators[i], from, to);
+            if (!performance) {
+                performance = this.calculateIndicatorPerformance(indicators[i], indicators[i].indicatorData, from, to);
                 indicator_entity_1.IndicatorDataService.insertPerformance(performance);
-                result.push(_.extend(indicators[i], {
-                    performance: performance,
-                }));
             }
-            return result;
-        });
+            indicatorsResult.push(_.extend(indicators[i], {
+                performance: performance
+            }));
+        }
+        console.timeEnd('8.1:getIndicatorsPerformanceNOCached');
+        return indicatorsResult;
+    };
+    IndicatorService.filterPerformanceDates = function (indicator, from, to) {
+        for (var i = 0; i < indicator.performances.length; i++) {
+            if (!moment(indicator.performances[i].from).diff(from, 'minutes') && !moment(indicator.performances[i].to).diff(to, 'minutes')) {
+                return indicator.performances[i];
+            }
+        }
+        return null;
     };
     IndicatorService.saveIndicator = function (customerId, indicator) {
         indicator.customerId = customerId;
@@ -249,49 +228,6 @@ var IndicatorService = (function () {
     IndicatorService.getAllIndicatorData = function (customerId, indicatorId) {
         return indicator_entity_1.IndicatorDataService.getIndicatorsDataBetween(customerId, [indicatorId]);
     };
-    // static setQuarterExpectation(customerId:string, indicatorId:string, quarter:IExpectation){
-    //     let startOfQuarter:Date = moment(quarter.date).startOf('quarter').toDate();
-    //     let endOfQuarter:Date = moment(quarter.date).endOf('quarter').subtract(1, 'second').toDate();
-    //     let self = this;
-    //     return Promise.all([
-    //         IndicatorDataService.get(customerId, indicatorId),
-    //         IndicatorDataService.getIndicatorsDataBetween(customerId, [indicatorId], startOfQuarter, endOfQuarter)
-    //     ]).then(function onResponseAll(values:Array<any>){
-    //             // detalles del indicador solicitado
-    //             let indicator:MongoIndicator = values[0];
-    //             let indicatorsData:Array<MongoIndicatorData> = values[1];
-    //             // first we need to calculate the month value for the indicator
-    //                 // si la operacion es promediar =>  el valor es el mismo
-    //             if(indicator.datasource.columnOperation !== Operations.average){
-    //                 // cualquier otra operacion => el  valor se divide en la cantidad de meses
-    //                 quarter.value = quarter.value / 3;
-    //             }
-    //             // si ya hay datos importados cargados para este periodo
-    //             if(indicatorsData.length){
-    //                 // update indicator data with expectation
-    //                 let promiseArray:Array<Promise<any>> = [];
-    //                 for(var i=0; i < indicatorsData.length; i++){
-    //                     promiseArray.push(IndicatorDataService.updateIndicatorData(customerId, indicatorId, indicatorsData[i].date, quarter.value ));                    
-    //                 }
-    //                 return Promise.all(promiseArray)
-    //                     .then(function (values:Array<any>){
-    //                         let isOk:boolean = true;
-    //                         for(var j=0; j < values.length; j++){
-    //                             isOk = isOk && values[j].ok;
-    //                         }
-    //                         return { ok: isOk };
-    //                     });
-    //             }
-    //             // if there aren't import, create empty imports with expect value set
-    //             let newIndicatorsData:Array<MongoIndicatorData> = self.createEmptyIndicatorData(customerId, indicatorId, quarter.value, startOfQuarter, endOfQuarter);
-    //             return IndicatorDataService.insertIndicatorData(newIndicatorsData)
-    //                 .then(function onInsert(response){
-    //                     return {
-    //                         ok: !!response.insertedIds.length
-    //                     }
-    //                 });
-    //         });        
-    // }
     IndicatorService.update = function (customerId, indicator) {
         var currentActive = indicator.active, newActive = !!indicator.datasource._id;
         if (currentActive != newActive && newActive) {
@@ -353,7 +289,7 @@ var IndicatorService = (function () {
         var consolidateExpected = 0;
         var oneUnitPercentageValue = 0;
         var result = {
-            indicatorId: indicator._id.toString(),
+            indicatorId: indicator._id,
             from: from,
             to: to,
             unitValue: 0,
@@ -404,9 +340,6 @@ var IndicatorService = (function () {
         }
         else {
             result.value = this.calculateEqualsToPercentage(indicator, value, expected);
-        }
-        if (result.value > 1) {
-            result.value = 1;
         }
         if (result.value < 0) {
             result.value = 0;

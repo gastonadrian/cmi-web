@@ -21,6 +21,11 @@ var seneca = SENECA();
 // let utils = utilsModule();
 var app = express();
 var senecaWebConfig = {
+    transport: {
+        tcp: {
+            timeout: 20000
+        }
+    },
     context: context,
     adapter: require('seneca-web-adapter-express'),
     auth: passport,

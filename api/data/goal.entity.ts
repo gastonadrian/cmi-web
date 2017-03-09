@@ -40,7 +40,7 @@ export class GoalDataService{
             "_id": {
                 "$in":mongoIds
             },
-            "customerId": customerId
+            "customerId": new ObjectID(customerId)
         };
 
         if(active === true || active === false){
@@ -51,12 +51,13 @@ export class GoalDataService{
     }    
 
     static getByCustomerId(customerId:string, active?:Boolean):Promise<Array<MongoGoal>>{
+        console.time('4:getByCustomerId');
 
         let findParams:any = {
             db: utils.getConnString(),
             collection: 'goals',
             query: {
-                customerId:customerId
+                customerId: new ObjectID(customerId)
             }
         };
 
@@ -64,14 +65,24 @@ export class GoalDataService{
             findParams.query.active = true;
         }
         
-        return mongoControl.find(findParams);
+        return mongoControl.find(findParams)
+            .then(function (response){
+                console.timeEnd('4:getByCustomerId');
+                return response;
+            });
     }
     static insertGoal(goal:MongoGoal):Promise<any>{
         let params:any = {
             db: utils.getConnString(),
-            collection: 'goals',
-            data: [goal]
+            collection: 'goals'
         };
+
+        goal.customerId = new ObjectID(goal.customerId);
+        goal.perspectiveId = new ObjectID(goal.perspectiveId);        
+        delete goal['indicators'];
+
+        params.data = [goal];
+
         return mongoControl.insert(params)
             .then(function(response:any){
                 return {
@@ -87,7 +98,12 @@ export class GoalDataService{
         };
 
         delete goal._id;
+        delete goal['indicators'];
+        
+        goal.customerId = new ObjectID(goal.customerId.toString());
+        goal.perspectiveId = new ObjectID(goal.perspectiveId.toString());        
         params.update = goal;
+
 
         return mongoControl.updateById(params);
     }
@@ -99,7 +115,7 @@ export class GoalDataService{
             collection: 'goal-indicators',
             query: {
                 goalId:goalId,
-                customerId:customerId
+                customerId: customerId
             }
         };
 
@@ -137,6 +153,7 @@ export class GoalDataService{
     }
 
     static getGoalPerformance(goalIds:Array<string>, from?:Date, to?:Date):Promise<Array<GoalPerformanceBase>>{
+        console.time('6:getGoalPerformance');
         let findParams:any = {
             db: utils.getConnString(),
             collection: 'goal-performance',
@@ -158,7 +175,11 @@ export class GoalDataService{
             };
         }
         
-        return mongoControl.find(findParams);
+        return mongoControl.find(findParams)
+            .then(function onOK(response){
+                console.timeEnd('6:getGoalPerformance');
+                return response;
+            });
     }
 
 
@@ -181,6 +202,4 @@ export class GoalDataService{
                 return response.result;
             });        
     }
-
-
 }

@@ -46,6 +46,7 @@ export class GaugeChartComponent implements OnChanges, AfterViewInit {
       this.buildSVG();
 
       if(this.config && this.config.percent){
+          // console.log(this.config);
           this.render();        
       }
     }
@@ -54,6 +55,7 @@ export class GaugeChartComponent implements OnChanges, AfterViewInit {
       this.observableConfig.subscribe(
         (config:GaugeChartConfig) => {
           this.config = config;
+          // console.log(config);
           if(this.config && this.config.percent && this.host){
             this.render();
           }
@@ -113,7 +115,7 @@ export class GaugeChartComponent implements OnChanges, AfterViewInit {
       let self:any = this;
       let oldValue:number = this.config.percent || 0;
 
-      $('.arc.chart-filled').attr('class','arc chart-filled ' + this.config.status);
+      $(this.element.nativeElement).find('.arc.chart-filled').attr('class','arc chart-filled ' + this.config.status);
       // Reset pointer position
       this.chart.transition().delay(100).ease('quad').duration(200).select('.needle').tween('reset-progress', function() {
         return function(percentOfPercent:any) {
