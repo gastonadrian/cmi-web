@@ -44,7 +44,7 @@ export class IndicatorService{
                 return IndicatorDataService.getIndicatorsLastSync(ids)
                     .then(function (indicatorsData:Array<IIndicatorSync>){
                         for(var i=0; i < indicatorsData.length; i++){
-                            let index =  _.findIndex(indicators, function mapId( value:IndicatorApiResult ) { return value._id.toString() === indicatorsData[i]._id } );
+                            let index =  _.findIndex(indicators, function mapId( value:IndicatorApiResult ) { return value._id.toString() === indicatorsData[i]._id.toString() } );
                             indicators[index].lastDateSynced = indicatorsData[i].date;
                         }
                         return indicators;

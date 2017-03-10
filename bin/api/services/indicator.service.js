@@ -23,7 +23,7 @@ var IndicatorService = (function () {
             return indicator_entity_1.IndicatorDataService.getIndicatorsLastSync(ids)
                 .then(function (indicatorsData) {
                 for (var i = 0; i < indicatorsData.length; i++) {
-                    var index = _.findIndex(indicators, function mapId(value) { return value._id.toString() === indicatorsData[i]._id; });
+                    var index = _.findIndex(indicators, function mapId(value) { return value._id.toString() === indicatorsData[i]._id.toString(); });
                     indicators[index].lastDateSynced = indicatorsData[i].date;
                 }
                 return indicators;
