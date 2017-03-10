@@ -49,12 +49,13 @@ export class GoalCreateComponent implements OnInit, AfterViewInit{
   }
   
   ngAfterViewInit() {
-      
-      this.htmlElement = this.element.nativeElement;
-      this.goalIndicatorsTableElement = this.goalIndicatorsTable.nativeElement;
-      this.indicatorsTableElement = this.indicatorsTable.nativeElement;
-      this.goalIndicatorsDataTable = $(this.goalIndicatorsTableElement).DataTable(AppSettings.DataTableConfig);    
-      this.indicatorsDataTable =$(this.indicatorsTableElement).DataTable(AppSettings.DataTableConfig);    
+      if(this.goal && this.goal._id){
+        this.htmlElement = this.element.nativeElement;
+        this.goalIndicatorsTableElement = this.goalIndicatorsTable.nativeElement;
+        this.indicatorsTableElement = this.indicatorsTable.nativeElement;
+        this.goalIndicatorsDataTable = $(this.goalIndicatorsTableElement).DataTable(AppSettings.DataTableConfig);    
+        this.indicatorsDataTable =$(this.indicatorsTableElement).DataTable(AppSettings.DataTableConfig);    
+      }
   }
 
   ngOnInit(){
