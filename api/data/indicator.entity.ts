@@ -388,7 +388,10 @@ export class IndicatorDataService{
         };
 
  
-        return mongoControl.find(findParams);
+        return mongoControl.find(findParams)
+            .then(function (response){
+                return response;
+            });
     }
 
 
@@ -406,14 +409,14 @@ export class IndicatorDataService{
         return mongoControl.insert(params);
     }
 
-    static updateIndicatorData(customerId:string, indicatorId:string, date:Date, expected:number):Promise<any>{
+    static updateIndicatorData(customerId:string, indicatorId:string, id:string, expected:number):Promise<any>{
         let params:any = {
             db: utils.getConnString(),
             collection: 'indicators-data',
             query: {
                 customerId: customerId,
                 indicatorId: new ObjectID(indicatorId.toString()),
-                date: date
+                _id: new ObjectID(id.toString())
             },
             update: {
                 expected: expected

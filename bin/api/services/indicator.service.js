@@ -259,8 +259,7 @@ var IndicatorService = (function () {
         return indicator_entity_1.IndicatorDataService.updateIndicator(indicator);
     };
     IndicatorService.updateIndicatorData = function (customerId, indicatorId, expect) {
-        expect.date = moment(expect.date).subtract(1, 'day').endOf('month').toDate();
-        return indicator_entity_1.IndicatorDataService.updateIndicatorData(customerId, indicatorId, expect.date, expect.value)
+        return indicator_entity_1.IndicatorDataService.updateIndicatorData(customerId, indicatorId, expect.id, expect.value)
             .then(function (result) {
             if (result.ok) {
                 indicator_entity_1.IndicatorDataService.removeCachedPerformance(indicatorId);

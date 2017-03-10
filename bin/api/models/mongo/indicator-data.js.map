@@ -1,1 +1,1 @@
-{"version":3,"file":"indicator-data.js","sourceRoot":"","sources":["../../../../api/models/mongo/indicator-data.ts"],"names":[],"mappings":";;;;;;AAAA,gEAA6D;AAC7D;IAAwC,sCAAiB;IAAzD;;IAEA,CAAC;IAAD,yBAAC;AAAD,CAAC,AAFD,CAAwC,uCAAiB,GAExD;AAFY,gDAAkB"}
+{"version":3,"file":"indicator-data.js","sourceRoot":"","sources":["../../../../api/models/mongo/indicator-data.ts"],"names":[],"mappings":";;;;;;AAAA,gEAA6D;AAC7D;IAAwC,sCAAiB;IAAzD;;IACA,CAAC;IAAD,yBAAC;AAAD,CAAC,AADD,CAAwC,uCAAiB,GACxD;AADY,gDAAkB"}

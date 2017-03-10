@@ -331,7 +331,10 @@ var IndicatorDataService = (function () {
                 }
             }
         };
-        return mongoControl.find(findParams);
+        return mongoControl.find(findParams)
+            .then(function (response) {
+            return response;
+        });
     };
     IndicatorDataService.insertIndicatorData = function (indicatorDataArray) {
         for (var i = 0; i < indicatorDataArray.length; i++) {
@@ -344,14 +347,14 @@ var IndicatorDataService = (function () {
         };
         return mongoControl.insert(params);
     };
-    IndicatorDataService.updateIndicatorData = function (customerId, indicatorId, date, expected) {
+    IndicatorDataService.updateIndicatorData = function (customerId, indicatorId, id, expected) {
         var params = {
             db: utils.getConnString(),
             collection: 'indicators-data',
             query: {
                 customerId: customerId,
                 indicatorId: new mongodb_1.ObjectID(indicatorId.toString()),
-                date: date
+                _id: new mongodb_1.ObjectID(id.toString())
             },
             update: {
                 expected: expected

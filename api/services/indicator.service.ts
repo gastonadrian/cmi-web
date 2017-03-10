@@ -336,8 +336,7 @@ export class IndicatorService{
     }
 
     static updateIndicatorData(customerId:string, indicatorId:string, expect:IExpectation):Promise<any>{
-        expect.date = moment(expect.date).subtract(1,'day').endOf('month').toDate();
-        return IndicatorDataService.updateIndicatorData(customerId, indicatorId, expect.date, expect.value)
+        return IndicatorDataService.updateIndicatorData(customerId, indicatorId, expect.id, expect.value)
             .then(function (result){
                 if(result.ok){
 
