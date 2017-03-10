@@ -91,6 +91,10 @@ export class PerspectiveService{
     
         // making sure that we consider cases where perspectives has no goals
         result.value = _.sumBy(goals, 'performance.periodPerformance.value')/goals.length || 0;
+    
+        if(result.value > 1){
+            result.value = 1;
+        }
 
         if(result.value <= perspective.semaphore.yellowUntil){
             if(result.value <= perspective.semaphore.redUntil){
