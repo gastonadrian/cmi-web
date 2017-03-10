@@ -11,9 +11,9 @@ html
     <!-- Bootstrap 3.3.6 -->
     <link rel="stylesheet" href="bootstrap/dist/css/bootstrap.min.css">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
     <!-- Ionicons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+    <link rel="stylesheet" href="Ionicons/css/ionicons.min.css">
     <!-- Theme style -->
     <link rel="stylesheet" href="styles/index.css">
     link(rel="stylesheet", href="nvd3/build/nv.d3.min.css")
@@ -22,8 +22,8 @@ html
     block styles
 
     title=title
-
-  <body class="hold-transition skin-red sidebar-mini sidebar-collapse">
+  //- sidebar-collapse
+  <body class="hold-transition skin-red sidebar-mini ">
     <div class="wrapper">
 
       <!-- Main Header -->
@@ -52,27 +52,26 @@ html
                 <!-- Menu toggle button -->
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                   <i class="fa fa-bell-o"></i>
-                  <span class="label label-warning">2</span>
+                  <span class="label label-warning">1</span>
                 </a>
                 <ul class="dropdown-menu">
-                  <li class="header">Tiene dos notificaciones pendientes</li>
+                  <li class="header">Tiene una notificaci&oacute;n pendiente</li>
                   <li>
                     <!-- Inner Menu: contains the notifications -->
                     <ul class="menu">
-                      <li><!-- start notification -->
-                        <a href="#">
-                          <i class="fa fa-pie-chart text-yellow"></i> Debe configurar el semaforo global
-                        </a>
-                      </li>
+                      //- <li><!-- start notification -->
+                      //-   <a href="#">
+                      //-     <i class="fa fa-pie-chart text-yellow"></i> Debe configurar el semaforo global
+                      //-   </a>
+                      //- </li>
                       <!-- end notification -->
                       <li><!-- start notification -->
-                        <a href="#">
+                        <a href="/perspectives">
                           <i class="fa fa-bullseye text-yellow"></i> Debe configurar sus perspectivas
                         </a>
                       </li>
                     </ul>
                   </li>
-                  <li class="footer"><a href="#">Ver todas</a></li>
                 </ul>
               </li>
               <!-- User Account Menu -->
@@ -127,6 +126,7 @@ html
             <li class="header">Menu</li>
             <!-- Optionally, you can add icons to the links -->
             <li class="active"><a href="/dashboard"><i class="fa fa-tachometer"></i> <span>Cuadro de Mando</span></a></li>
+            <li><a href="/perspectives"><i class="fa fa-tasks"></i> <span>Perspectivas</span></a></li>
             <li class="treeview">
               <a href="#"><i class="fa  fa-check-circle-o"></i> <span>Objetivos</span>
                 <span class="pull-right-container">
@@ -135,7 +135,7 @@ html
               </a>
               <ul class="treeview-menu">
                 <li><a href="/goals/create">Crear</a></li>
-                <li><a href="#">Ver listado</a></li>
+                <li><a href="/perspectives">Listado</a></li>
               </ul>
             </li>
             <li class="treeview">
@@ -145,13 +145,25 @@ html
                 </span>
               </a>
               <ul class="treeview-menu">
-                <li><a href="/indicators/create">Crear indicador</a></li>
-                <li><a href="#">Ver listado</a></li>
+                <li><a href="/indicators/create">Crear</a></li>
+                <li><a href="/indicators/list">Listado</a></li>
+                //- <li><a href="/indicators/expected">Ingresar esperados</a></li>
               </ul>
             </li>
-            <li><a href="/perspectives"><i class="fa fa-tasks"></i> <span>Perspectivas</span></a></li>
-            <li><a href="/configs"><i class="fa fa-sliders"></i> <span>Configuraciones</span></a></li>
-            <li><a href="/profile"><i class="fa fa-user"></i> <span>Perfil</span></a></li>            
+            //- <li><a href="/configs"><i class="fa fa-sliders"></i> <span>Configuraciones</span></a></li>
+
+            if admin
+              li.treeview
+                a(href="#")
+                  i.fa.fa-user
+                  span Usuarios
+                ul.treeview-menu
+                  li
+                    a(href="/users/create") Crear
+                  li
+                    a(href="/users/list") Listado
+
+            <li><a href="/profile"><i class="fa fa-archive"></i> <span>Perfil</span></a></li>            
           </ul>
           <!-- /.sidebar-menu -->
         </section>
@@ -170,10 +182,10 @@ html
       <footer class="main-footer">
         <!-- To the right -->
         <div class="pull-right hidden-xs">
-          <p>Alpha 0.0.1</p> 
+          <p>1.0.0</p> 
         </div>
         <!-- Default to the left -->
-        <strong>Copyright &copy; 2016 <a href="#">CMI: Balanced Scorecard</a>.</strong> All rights reserved.
+        <strong>Copyright &copy; 2016 <a href="#">CMI: Balanced Scorecard</a>.</strong> Todos los derechos reservados.
       </footer>
     </div>
     <!-- ./wrapper -->
@@ -183,10 +195,10 @@ html
     script var admin = !{admin}
     <script type="text/javascript" src="jquery/dist/jquery.min.js"></script>  
     <script type="text/javascript" src="bootstrap/dist/js/bootstrap.min.js"></script>  
+    script(type="text/javascript", src="moment/moment.js")
     <script type="text/javascript" src="js/adminLTE.js"></script>
     <script src="core-js/client/shim.min.js"></script>
     <script src="zone.js/dist/zone.js"></script>
-    script(type="text/javascript", src="moment/moment.js")
     script(type="text/javascript", src="d3/d3.min.js")
     script(type="text/javascript", src="nvd3/build/nv.d3.min.js")
     script(type="text/javascript", src="datatables.net/js/jquery.dataTables.js")

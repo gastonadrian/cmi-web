@@ -1,5 +1,5 @@
 export class GoalIndicatorBase{
-    public indicatorId:string;
+    public indicatorId:any;
     public customerId:string;
     public goalId:string;
     public factor:number;

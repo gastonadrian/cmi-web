@@ -7,16 +7,16 @@ import { Observable } from 'rxjs/Rx';
 
 import { Goal } from './../models/goal';
 import { DataPeriod } from './../models/shared';
-import { Perspective } from './../models/perspective';
+import { PerspectiveApiResult } from "../../../../api/models/api/perspective";
 
 @Injectable()
-export class DashboardResolver implements Resolve<Array<Perspective>> {
+export class DashboardResolver implements Resolve<Array<PerspectiveApiResult>> {
   constructor(
     private service: DashboardService, 
     private router: Router,
     private dataPeriodService: DataPeriodService) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Array<Perspective>> {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Array<PerspectiveApiResult>> {
     let dataPeriod: DataPeriod = this.dataPeriodService.selectedPeriod;
     if(dataPeriod && dataPeriod.id){
       return this.service.get(dataPeriod.start, dataPeriod.end);

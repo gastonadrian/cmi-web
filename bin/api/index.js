@@ -1,6 +1,7 @@
 module.exports = function api(options) {
     var routes = require('./routes');
     this.add('role:api,path:dashboard', function (msg, respond) {
+        // console.warn('entering index js');
         this.act('role:dashboard,cmd:index', msg, respond);
     });
     this.add('role:api,path:perspectives', function (msg, respond) {
@@ -19,6 +20,9 @@ module.exports = function api(options) {
             this.act('role:datasources,cmd:save', msg, respond);
         }
     });
+    this.add('role:api,path:indicatorsgetsync', function (msg, respond) {
+        this.act('role:indicators,cmd:getallsync', msg, respond);
+    });
     this.add('role:api,path:indicatorsgetall', function (msg, respond) {
         this.act('role:indicators,cmd:getall', msg, respond);
     });
@@ -34,8 +38,14 @@ module.exports = function api(options) {
     this.add('role:api,path:goalindicatorremove', function (msg, respond) {
         this.act('role:indicators,cmd:removegoal', msg, respond);
     });
-    this.add('role:api,path:indicatorexpectation', function (msg, respond) {
-        this.act('role:indicators,cmd:setquarter', msg, respond);
+    // this.add('role:api,path:indicatorexpectation', function (msg, respond) {
+    //     this.act('role:indicators,cmd:setquarter', msg, respond);
+    // }); 
+    this.add('role:api,path:indicatorsdatagetall', function (msg, respond) {
+        this.act('role:indicators,cmd:getallindicatordata', msg, respond);
+    });
+    this.add('role:api,path:updateindicatordata', function (msg, respond) {
+        this.act('role:indicators,cmd:updateindicatordata', msg, respond);
     });
     this.add('role:api,path:indicatorsdatasource', function (msg, respond) {
         this.act('role:indicators,cmd:savedatasource', msg, respond);
@@ -45,6 +55,9 @@ module.exports = function api(options) {
     });
     this.add('role:api,path:goals', function (msg, respond) {
         this.act('role:goals,cmd:get', msg, respond);
+    });
+    this.add('role:api,path:goaldetailedperformance', function (msg, respond) {
+        this.act('role:goals,cmd:detailedperformance', msg, respond);
     });
     this.add('role:api,path:goalcreate', function (msg, respond) {
         this.act('role:goals,cmd:save', msg, respond);
@@ -56,7 +69,12 @@ module.exports = function api(options) {
         this.act('role:goals,cmd:delete', msg, respond);
     });
     this.add('role:api,path:customers', function (msg, respond) {
-        this.act('role:customers,cmd:save', msg, respond);
+        if (msg.request$.method === 'GET') {
+            this.act('role:customers,cmd:getall', msg, respond);
+        }
+        else {
+            this.act('role:customers,cmd:save', msg, respond);
+        }
     });
     this.add('role:api,path:login', function (msg, respond) {
         var pin = {

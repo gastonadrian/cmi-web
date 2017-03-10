@@ -1,7 +1,8 @@
 import * as _ from 'lodash';
 import * as moment from 'moment';
+import * as utils from './../utils';
+import * as mongoControl from 'mongo-control';
 
-// import { CustomerDataService  } from './../data/datasource.entity';
 import { PerspectiveDataService } from './../data/perspective.entity';
 
 export class CustomerService {
@@ -11,6 +12,16 @@ export class CustomerService {
 
     static create(customerId:string):Promise<any>{
         return PerspectiveDataService.createBasePerspectives(customerId);
+    }
+
+    static getAll(customer:string):Promise<any>{
+        let findParams:any = {
+            db: utils.getConnString(),
+            collection: 'sys_user',
+            query: {}
+        };
+        
+        return mongoControl.find(findParams);
     }
 
     // static get(customerId:string):Promise<Array<MongoDatasource>>{

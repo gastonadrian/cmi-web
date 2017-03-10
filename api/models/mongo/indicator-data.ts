@@ -1,10 +1,4 @@
-export class MongoIndicatorData{
-    constructor(
-    public indicatorId:string,
-    public customerId:string,
-    public date:Date,
-    public value?:number,
-    public expected?:number){
-
-    }
+import { IndicatorDataBase } from './../indicator-data.base';
+export class MongoIndicatorData extends IndicatorDataBase{
+    public _id?:string;
 }

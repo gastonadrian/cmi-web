@@ -1,2 +1,8 @@
 env: flex
 runtime: nodejs
+env_variables:
+  MONGO_USER: 'datacollector'
+  MONGO_PASSWORD: 'datacollector'
+  MONGO_HOST: 'ds143559.mlab.com'
+  MONGO_PORT: 43559
+  MONGO_DB: 'kpis'

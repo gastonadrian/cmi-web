@@ -5,12 +5,20 @@ module.exports = function goalApi(){
     this.add('role:goals,cmd:save', save);
     this.add('role:goals,cmd:update', update);
     this.add('role:goals,cmd:delete', remove);
+    this.add('role:goals,cmd:detailedperformance', getPerformance);
 
     function get(msg, respond){
         goalService.get(msg.args.params.customerId, msg.args.params.goalId)
             .then(function onGet(response){
                 respond(null, response);
             });
+    }
+
+    function getPerformance(msg, respond){
+        goalService.getSingleGoalPerformance(msg.args.params.customerId, msg.args.params.goalId, msg.args.params.from, msg.args.params.to)
+            .then(function onGet(response){
+                respond(null, response);
+            });        
     }
 
     function save(msg, respond){

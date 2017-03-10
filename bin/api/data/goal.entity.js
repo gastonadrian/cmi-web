@@ -13,25 +13,57 @@ var GoalDataService = (function () {
         };
         return mongoControl.getById(findParams);
     };
+    GoalDataService.getByIds = function (customerId, goalIds, active) {
+        var findParams = {
+            db: utils.getConnString(),
+            collection: 'goals',
+        }, mongoIds = [];
+        if (!goalIds.length) {
+            return new Promise(function ok(resolve, reject) {
+                return reject('no hay datos');
+            });
+        }
+        for (var i = 0; i < goalIds.length; i++) {
+            mongoIds.push(new mongodb_1.ObjectID(goalIds[i]));
+        }
+        findParams.query = {
+            "_id": {
+                "$in": mongoIds
+            },
+            "customerId": new mongodb_1.ObjectID(customerId)
+        };
+        if (active === true || active === false) {
+            findParams.query.active = active;
+        }
+        return mongoControl.find(findParams);
+    };
     GoalDataService.getByCustomerId = function (customerId, active) {
+        console.time('4:getByCustomerId');
         var findParams = {
             db: utils.getConnString(),
             collection: 'goals',
             query: {
-                customerId: customerId
+                customerId: new mongodb_1.ObjectID(customerId)
             }
         };
         if (active === false || active === true) {
             findParams.query.active = true;
         }
-        return mongoControl.find(findParams);
+        return mongoControl.find(findParams)
+            .then(function (response) {
+            console.timeEnd('4:getByCustomerId');
+            return response;
+        });
     };
     GoalDataService.insertGoal = function (goal) {
         var params = {
             db: utils.getConnString(),
-            collection: 'goals',
-            data: [goal]
+            collection: 'goals'
         };
+        goal.customerId = new mongodb_1.ObjectID(goal.customerId);
+        goal.perspectiveId = new mongodb_1.ObjectID(goal.perspectiveId);
+        delete goal['indicators'];
+        params.data = [goal];
         return mongoControl.insert(params)
             .then(function (response) {
             return {
@@ -46,6 +78,9 @@ var GoalDataService = (function () {
             id: goal._id
         };
         delete goal._id;
+        delete goal['indicators'];
+        goal.customerId = new mongodb_1.ObjectID(goal.customerId.toString());
+        goal.perspectiveId = new mongodb_1.ObjectID(goal.perspectiveId.toString());
         params.update = goal;
         return mongoControl.updateById(params);
     };
@@ -55,8 +90,8 @@ var GoalDataService = (function () {
             db: utils.getConnString(),
             collection: 'goal-indicators',
             query: {
-                goalId: goalId,
-                customerId: customerId
+                goalId: goalId.toString(),
+                customerId: customerId.toString()
             }
         };
         return mongoControl.remove(goalIndicatorParams)
@@ -66,14 +101,71 @@ var GoalDataService = (function () {
                 db: utils.getConnString(),
                 collection: 'goals',
                 query: {
-                    _id: new mongodb_1.ObjectID(goalId),
-                    customerId: customerId
+                    _id: new mongodb_1.ObjectID(goalId.toString()),
+                    customerId: new mongodb_1.ObjectID(customerId.toString())
                 }
             };
             return mongoControl.remove(params)
                 .then(function (response) {
                 return response.result;
             });
+        });
+    };
+    GoalDataService.insertGoalPerformance = function (goalPerformance) {
+        var params = {
+            db: utils.getConnString(),
+            collection: 'goal-performance',
+            data: [goalPerformance]
+        };
+        return mongoControl.insert(params)
+            .then(function (response) {
+            return {
+                id: response.insertedIds.pop().toString()
+            };
+        });
+    };
+    GoalDataService.getGoalPerformance = function (goalIds, from, to) {
+        console.time('6:getGoalPerformance');
+        var findParams = {
+            db: utils.getConnString(),
+            collection: 'goal-performance',
+            query: {
+                goalId: {
+                    "$in": goalIds
+                }
+            },
+            sortBy: {
+                "to": -1
+            }
+        };
+        if (from && to) {
+            findParams.query.from = from;
+            findParams.query.to = {
+                "$gte": from,
+                "$lte": to
+            };
+        }
+        return mongoControl.find(findParams)
+            .then(function onOK(response) {
+            console.timeEnd('6:getGoalPerformance');
+            return response;
+        });
+    };
+    GoalDataService.removePerformance = function (goalId, from, to) {
+        var removePerformanceParams = {
+            db: utils.getConnString(),
+            collection: 'goal-performance',
+            query: {
+                goalId: goalId
+            }
+        };
+        if (from && to) {
+            removePerformanceParams.query.from = { '$lte': from };
+            removePerformanceParams.query.to = { '$gte': to };
+        }
+        return mongoControl.remove(removePerformanceParams)
+            .then(function (response) {
+            return response.result;
         });
     };
     return GoalDataService;

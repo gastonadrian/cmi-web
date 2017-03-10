@@ -17,11 +17,21 @@ export class UserService {
             .catch(this.handleError);
     }
 
+    getAll():Observable<any[]>{
+        return this.http
+            .get(`/api/customers`, { headers: this.getHeaders() })
+            .map(this.mapResponse)
+            .catch(this.handleError);
+    }
+
     getId(response:Response):string{
         let result = response.json() as any;
         return result.id as string;
     }
 
+    mapResponse(response:Response):any[]{
+        return response.json() as any[];
+    }
 
     handleError(error: Response) {
         console.log(error);

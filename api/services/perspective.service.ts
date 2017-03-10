@@ -15,11 +15,13 @@ export class PerspectiveService{
     }
 
     static getDashboard(customerId:string, from:Date, to:Date):Promise<any>{
+        console.time('1:dashboard');
         let period:any = utils.getPeriodFromParams( from, to );
 
         // desired result
         return this.getPerspectivesWithPerformance(customerId, true, period.from, period.to)
             .then(function(perspectives){
+                console.timeEnd('1:dashboard');                
                 return {
                     filterDateFrom: period.from,
                     filterDateTo: period.to,
@@ -29,66 +31,70 @@ export class PerspectiveService{
     }
     
     static getAll(customerId:string, withGoals:Boolean):Promise<Array<PerspectiveApiResult>>{
-        return Promise.all([
-            PerspectiveDataService.getPerspectives(customerId),
-            GoalService.getByCustomerId(customerId)
-        ]).then(function onBothPromisesResult(values:any){
-            let perspectives:Array<MongoPerspective> = values[0] as Array<MongoPerspective>;
-            let goals:Array<MongoGoal> = values[1] as Array<MongoGoal>;
-            let result:Array<PerspectiveApiResult> = [];
-
-            for(var i=0; i< perspectives.length; i++){
-                let perspectiveGoals:Array<MongoGoal> = _.filter(goals, _.matchesProperty('perspectiveId', perspectives[i]._id.toString()));
-                result.push(_.extend(perspectives[i],{
-                     goals: perspectiveGoals as Array<GoalApiResult>
-                }) as PerspectiveApiResult);
-            }
-
-            return result;
-        });
+         return PerspectiveDataService.getPerspectives(customerId)
+            .then(function (perspectives:Array<PerspectiveApiResult>) {
+                return perspectives;
+            });
     }
 
     static save(customerId:string, perspectives:Array<PerspectiveApiResult>):Promise<any[]>{
         var perspectiveArray:Array<Promise<any>> = [];
         for(var i=0; i < perspectives.length; i++){
+            if(perspectives[i].semaphore){
+                if(perspectives[i].semaphore.redUntil > 1){
+                    perspectives[i].semaphore.redUntil = (perspectives[i].semaphore.redUntil /100) || 0;
+                }
+    
+                if(perspectives[i].semaphore.yellowUntil > 1){
+                    perspectives[i].semaphore.yellowUntil = (perspectives[i].semaphore.yellowUntil / 100) || 0;
+                }
+            }
             perspectiveArray.push(PerspectiveDataService.update(perspectives[i]));
         }
+        
         return Promise.all(perspectiveArray);
     }
 
-    private static getPerspectivesWithPerformance(customerId:string, withPerformance:Boolean, from: Date, to:Date):Promise<Array<PerspectiveApiResult>>{
+    private static getPerspectivesWithPerformance(customerId:string, withPerformance:Boolean, from: Date, to:Date):Promise<any>{
+        console.time('2:getPerspectivesWithPerformance');
         let self = this;
 
-        return Promise.all([
-            GoalService.getGoalsPerformance(customerId, false, from, to),
-            PerspectiveDataService.getPerspectives(customerId)
-        ]).then(function onBothPromisesResult(values:any){
-            let goals:Array<GoalApiResult> = values[0] as Array<GoalApiResult>;
-            let perspectives:Array<MongoPerspective> = values[1] as Array<MongoPerspective>;
-    
-            let result:Array<PerspectiveApiResult> = [];
-            
-            for (var index = 0; index < perspectives.length; index++) {
-                let perspectiveGoals = _.filter(goals, _.matchesProperty('perspectiveId', perspectives[index]._id.toString()));
-                
-                result.push(_.extend(perspectives[index], {
-                    goals: perspectiveGoals,
-                    performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals)
-                }) as PerspectiveApiResult);
-            }
-            return result;
+        return PerspectiveDataService.getPerspectives(customerId)
+            .then(function (perspectives:Array<PerspectiveApiResult>) {
+                let goals:Array<GoalApiResult> = _.flatMap(perspectives, (p:PerspectiveApiResult) => { return p.goals });
 
-        });
+                return GoalService.getGoalsPerformance(goals, false, from, to)
+                    .then(function onGetPerformance(goalsWithPerformance){
+                        let result:Array<PerspectiveApiResult> = [];
+
+                        for (var index = 0; index < perspectives.length; index++) {
+                            let perspectiveGoalIds:any[] = _.map(perspectives[index].goals, (g:GoalApiResult) => { return g._id });
+                            let perspectiveGoals = _.filter(goalsWithPerformance, (g:GoalApiResult) => { return _.includes(perspectiveGoalIds, g._id); });
+                            
+                            result.push(_.extend(perspectives[index], {
+                                goals: perspectiveGoals,
+                                performance: self.calculatePerspectivePerformance(perspectives[index], perspectiveGoals, to)
+                            }) as PerspectiveApiResult);
+                        }
+                        console.timeEnd('2:getPerspectivesWithPerformance');
+                        return result;
+                    });
+            });
     }
 
-    private static calculatePerspectivePerformance(perspective:MongoPerspective, goals:Array<GoalApiResult>):IPerformance{
+    private static calculatePerspectivePerformance(perspective:MongoPerspective, goals:Array<GoalApiResult>, to:Date):IPerformance{
         let result:IPerformance = {
             value: 1,
-            semaphoreStatus: SemaphoreStatus.red
+            semaphoreStatus: SemaphoreStatus.red,
+            date: to
         };
     
         // making sure that we consider cases where perspectives has no goals
-        result.value = _.sumBy(goals, 'performance.value')/goals.length || 0;
+        result.value = _.sumBy(goals, 'performance.periodPerformance.value')/goals.length || 0;
+    
+        if(result.value > 1){
+            result.value = 1;
+        }
 
         if(result.value <= perspective.semaphore.yellowUntil){
             if(result.value <= perspective.semaphore.redUntil){

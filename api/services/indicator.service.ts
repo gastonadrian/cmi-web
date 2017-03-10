@@ -9,10 +9,17 @@ import { IPerformance, Operations, SemaphoreStatus, PerformanceComparisons  } fr
 import { MongoGoalIndicator } from './../models/mongo/goal-indicator.mongo';
 import { MongoIndicator } from './../models/mongo/indicator.mongo';
 import { MongoIndicatorData } from './../models/mongo/indicator-data';
+import { MongoGoal } from './../models/mongo/goal.mongo';
+
 
 import { IndicatorApiResult } from './../models/api/indicator';
+import { GoalApiResult } from './../models/api/goal';
 import { GoalIndicatorApiResult } from './../models/api/goal-indicator';
 import { IExpectation } from './../models/api/expectation';
+import { IIndicatorSync } from './../models/indicator-sync.interface';
+import { IndicatorPerformanceBase } from './../models/indicator-performance.base';
+
+import { GoalService } from './goal.service';
 export class IndicatorService{
     
     constructor(){
@@ -22,16 +29,39 @@ export class IndicatorService{
         return IndicatorDataService.get(customerId, indicatorId);
     }
 
-    static getAll(customerId:string):Promise<any>{
-        return IndicatorDataService.getAllByCustomerId(customerId);
+    static getAll(customerId:string, active?:Boolean):Promise<any>{
+        return IndicatorDataService.getAllByCustomerId(customerId, active);
+    }
+
+    static getAllSync(customerId:string):Promise<any>{
+        return IndicatorDataService.getAllByCustomerId(customerId, true)
+            .then(function onGetAll(indicators:Array<IndicatorApiResult>){
+                let ids:string[] = indicators.map(function mapIndicatorId(ind){
+                    return ind._id.toString();
+                });
+
+                // obtain all the data-indicator grouped by date
+                return IndicatorDataService.getIndicatorsLastSync(ids)
+                    .then(function (indicatorsData:Array<IIndicatorSync>){
+                        for(var i=0; i < indicatorsData.length; i++){
+                            let index =  _.findIndex(indicators, function mapId( value:IndicatorApiResult ) { return value._id.toString() === indicatorsData[i]._id.toString() } );
+                            indicators[index].lastDateSynced = indicatorsData[i].date;
+                        }
+                        return indicators;
+                    });
+            });
     }
 
     static getGoalIndicators(customerId:string, goalIds:Array<string>):Promise<Array<MongoGoalIndicator>>{
         return IndicatorDataService.getGoalIndicators(customerId, goalIds);
     }
 
-    static getIndicatorsByGoalId(customerId:string, goalIds:Array<string>):Promise<Array<MongoIndicator>>{
-        return IndicatorDataService.getAllByGoalIds(customerId, goalIds);        
+    static getIndicatorsByGoalId(customerId:string, goalIds:Array<any>):Promise<Array<MongoIndicator>>{
+        return IndicatorDataService.getByGoalIds(customerId, goalIds);        
+    }
+
+    static getComposedIndicatorsByGoalId(customerId:string, goalIds:Array<any>, from, to):Promise<Array<MongoIndicator>>{
+        return IndicatorDataService.getAllByGoalIds(customerId, goalIds, from, to);        
     }
 
     /**
@@ -43,31 +73,40 @@ export class IndicatorService{
      * @param {any} to
      * @returns
      */
-    static getIndicatorsPerformance(customerId:string, goalIds:Array<string>, from:Date, to:Date):Promise<Array<IndicatorApiResult>>{
-
-        let indicatorIds:Array<string> = [];
+    static getIndicatorsPerformance(indicators:Array<MongoIndicator>, from:Date, to:Date):Array<IndicatorApiResult>{
+        console.time('8.1:getIndicatorsPerformanceCached');
+        console.time('8.1:getIndicatorsPerformanceNOCached');
         let indicatorsResult:Array<IndicatorApiResult> = [];
-        let self = this;
 
-        return IndicatorDataService.getAllByGoalIds(customerId, goalIds).then(function onGetIndicators(indicators: Array<MongoIndicator>){
+        for(var i = 0; i< indicators.length; i++){
+            let performance:IndicatorPerformanceBase = this.filterPerformanceDates(indicators[i], from, to);
             
-            indicatorIds = indicators.map(function mapIndicatorId(indicator:MongoIndicator){
-                return indicator._id.toString();
-            });    
+            if(!performance){                     
+                performance = this.calculateIndicatorPerformance(indicators[i], indicators[i].indicatorData, from, to );    
+                IndicatorDataService.insertPerformance(performance);
+            }
 
-            // get indicator data and expectedvalues
-            return IndicatorDataService.getIndicatorsData(customerId, indicatorIds, from, to).then(function onGetIndicatorsData(indicatorsData:Array<MongoIndicatorData>){
-                //calculate performance for each indicator
-                for(var i = 0; i < indicators.length; i++){
-                    let performance:IPerformance = self.calculateIndicatorPerformance(indicators[i], _.filter(indicatorsData, _.matches({ indicatorId: indicators[i]._id.toString() })) );
-                    
-                    indicatorsResult.push(_.extend(indicators[i], 
-                        { performance: performance, id:indicators[i]._id.toString()  }) as IndicatorApiResult);
-                }
-                return indicatorsResult;    
-            });
-        });
+            indicatorsResult.push(                     
+                _.extend(indicators[i], { 
+                    performance: performance
+                }) as IndicatorApiResult
+            );   
+        }
+
+        console.timeEnd('8.1:getIndicatorsPerformanceNOCached');                    
+        return indicatorsResult;
+        
     }
+
+    private static filterPerformanceDates(indicator:MongoIndicator, from:Date, to:Date):IndicatorPerformanceBase{
+        for(var i=0; i < indicator.performances.length; i++){
+            if(!moment(indicator.performances[i].from).diff(from, 'minutes') && !moment(indicator.performances[i].to).diff(to, 'minutes')){
+                return indicator.performances[i];
+            }
+        }
+        return null;
+    }
+
 
     static saveIndicator(customerId:string, indicator:IndicatorApiResult):Promise<any>{
         indicator.customerId = customerId;
@@ -79,13 +118,19 @@ export class IndicatorService{
                 return reject('Faltan datos');
             });
         }
-    
-        // is active as long as it has a datasource id assigned
-        indicator.active = !!indicator.datasource._id;
 
+        if(indicator.semaphore){
+            if(indicator.semaphore.redUntil > 1){
+                indicator.semaphore.redUntil = (indicator.semaphore.redUntil /100) || 0;
+            }
+
+            if(indicator.semaphore.yellowUntil > 1){
+                indicator.semaphore.yellowUntil = (indicator.semaphore.yellowUntil / 100) || 0;
+            }
+        }
 
         if(indicator._id && indicator._id.length){
-            return IndicatorDataService.updateIndicator(indicator as MongoIndicator);
+            return this.update(customerId, indicator as IndicatorApiResult);
         }
         else{
             return IndicatorDataService.insertIndicator(indicator as MongoIndicator);
@@ -93,7 +138,9 @@ export class IndicatorService{
     }
 
     static assignGoal(customerId:string, goalIndicator:GoalIndicatorApiResult):Promise<any>{
+        let self = this;
         goalIndicator.customerId = customerId;
+
         return Promise.all([
             IndicatorDataService.insertGoalIndicator(customerId, goalIndicator),
             IndicatorDataService.get(customerId, goalIndicator.indicatorId)
@@ -108,17 +155,22 @@ export class IndicatorService{
 
                 // add the goal to "goalIds" property
                 indicator.goalIds.push(goalIndicator.goalId);
-                return IndicatorDataService.updateIndicator(indicator)
+                return self.update(customerId, indicator)
                     .then(function onUpdateResponse(response:any){
                         return { ok: response.ok && insertGoalIndicatorResult.ok }
                     });
             }
+
+            // remove performance cache
+            GoalService.removeCachedPerformance(goalIndicator.goalId);
 
             return insertGoalIndicatorResult;
         });
     }
 
     static removeGoal(customerId:string, goalId:string, indicatorId:string):Promise<any>{
+        let self = this;
+
         return Promise.all([
             IndicatorDataService.removeGoalIndicator(customerId, goalId, indicatorId),
             IndicatorDataService.get(customerId, indicatorId)
@@ -129,7 +181,7 @@ export class IndicatorService{
             _.remove(indicator.goalIds, function(id:string) {
                 return id == goalId;
             });
-            return IndicatorDataService.updateIndicator(indicator)
+            return self.update(customerId, indicator)
                     .then(function onUpdateResponse(response:any){
                         return { ok: response.ok && removeGoalIndicatorResult.ok }
                     });
@@ -137,91 +189,188 @@ export class IndicatorService{
     }
 
     static saveIndicatorDataSource(customerId:string, indicator:MongoIndicator):Promise<any>{
+        let self = this;
         return this.get(customerId, indicator._id.toString())
             .then(function onIndicatorGet(oldIndicator:MongoIndicator){
                 oldIndicator.datasource = indicator.datasource;
 
-                return IndicatorDataService.updateIndicator(oldIndicator as MongoIndicator);
+                return self.update(customerId, oldIndicator as IndicatorApiResult);
             });
     }
 
-    static update(indicator:MongoIndicator):Promise<any>{
+    static createIndicatorData(customerId:string, indicatorData:Array<MongoIndicatorData>):Promise<any>{
+
+        //validar array vacio
+        if(!indicatorData.length){
+            return new Promise(function(resolve, reject){
+                return resolve({
+                    ok:false,
+                    why: 'Faltan datos'
+                });
+            });            
+        }
+
+        // guardamos el id
+        let indicatorId = indicatorData[0].indicatorId;
+
+
+        return IndicatorDataService.get(customerId, indicatorId)
+        .then(function onIndicator(indicator:MongoIndicator){
+
+            // validar que todos los elementos del array tengan los datos seteados
+            for(var i=0; i< indicatorData.length; i++){
+                indicatorData[i].customerId = customerId;
+                indicatorData[i].expected = indicator.datasource.monthlyExpected;
+                indicatorData[i].date = moment(indicatorData[i].date).toDate(); 
+    
+                // validar que todos los datos sean correctos
+                if(!(indicatorData[i].indicatorId
+                && moment.isDate(indicatorData[i].date))){
+                    return new Promise(function(resolve, reject){
+                        return resolve({
+                            ok:false,
+                            why: 'Faltan datos'
+                        });
+                    });
+                }
+    
+            }
+    
+            let dates:Array<Date> = _.flatMap(indicatorData, (iData:MongoIndicatorData) => { return iData.date; } );
+            let datesToAdd:Array<MongoIndicatorData> = [];
+            let datesToUpdate:Array<MongoIndicatorData> = [];
+            
+            return IndicatorDataService.getIndicatorDataDates(customerId, indicatorId, dates)
+                .then(function onGetDates(response:Array<MongoIndicatorData>){
+                    for(var i =0; i < dates.length; i++){
+    
+                        let oldIndicator:MongoIndicatorData = _.find(response, _.matchesProperty('date', dates[i]));
+                        let newIndicator:MongoIndicatorData = _.find(indicatorData, _.matchesProperty('date', dates[i]));
+    
+                        if(newIndicator.value === null){
+                            continue;
+                        }
+    
+                        if(oldIndicator){
+                            // must UPDATE on the db
+                            oldIndicator.value = newIndicator.value;
+                            datesToUpdate.push(oldIndicator);
+                        } else {
+                            datesToAdd.push(newIndicator)
+                        }
+                    }
+    
+                    let requests:Array<Promise<any>> = [];
+                    
+                    if(datesToAdd.length){
+                         requests.push(IndicatorDataService.insertIndicatorData(datesToAdd))                    
+                    }
+                    for(var j=0; j < datesToUpdate.length; j++){
+                        requests.push(IndicatorDataService.updateIndicatorDataValue(customerId, datesToUpdate[j]));
+                    }
+
+                    
+                    var minmaxDateArray = dates.map(function(dateValue){
+                        return moment(dateValue);
+                    });
+
+                    console.log('min',moment.min(minmaxDateArray).toDate()); 
+                    console.log('max', moment.max(minmaxDateArray).toDate());
+                    
+                    IndicatorDataService.removeCachedPerformance(indicator._id, moment.min(minmaxDateArray).toDate(), moment.max(minmaxDateArray).toDate());
+                    for(var i = 0; i < indicator.goalIds.length; i++){
+                        GoalService.removeCachedPerformance(indicator.goalIds[i], moment.min(minmaxDateArray).toDate(), moment.max(minmaxDateArray).toDate());
+                    }
+                
+                    return Promise.all(requests)
+                        .then(function onSaveIndicators(response){
+                            return IndicatorDataService.getIndicatorsLastSync([indicatorId])
+                                .then(function (indicatorSyncs:Array<IIndicatorSync>){
+                                    return indicatorSyncs[0];
+                                });
+                            });
+                });
+        });
+    }
+
+    static getAllIndicatorData(customerId:string, indicatorId:string):Promise<any>{
+        return IndicatorDataService.getIndicatorsDataBetween(customerId, [indicatorId]);
+    }
+
+    static update(customerId:string, indicator:MongoIndicator){
+        let currentActive:Boolean = indicator.active,
+            newActive:Boolean = !!indicator.datasource._id;
+
+        if(currentActive != newActive && newActive){
+            // get goals and update those to active                    
+            // we only want the active === false, to update those to active==true
+            GoalService.getByIds(customerId, indicator.goalIds, false)
+                .then(function onGetByIds(goals:Array<GoalApiResult>){
+                    for(var i=0; i<goals.length; i++){
+                        goals[i].active = true;
+                        GoalService.update(customerId, goals[i]);
+                    }
+                });
+            }
+
+        // is active as long as it has a datasource id assigned
+        indicator.active = newActive;
+
+        if(indicator.semaphore){
+            if(indicator.semaphore.redUntil > 1){
+                indicator.semaphore.redUntil = (indicator.semaphore.redUntil /100) || 0;
+            }
+
+            if(indicator.semaphore.yellowUntil > 1){
+                indicator.semaphore.yellowUntil = (indicator.semaphore.yellowUntil / 100) || 0;
+            }
+        }
+
+        //remove cached performance
+        IndicatorDataService.removeCachedPerformance(indicator._id.toString());
+        for(var i = 0; i < indicator.goalIds.length; i++){
+            GoalService.removeCachedPerformance(indicator.goalIds[i]);
+        }
+        
         return IndicatorDataService.updateIndicator(indicator);       
     }
 
-    static createIndicatorData(customerId:string, indicatorData:MongoIndicatorData):Promise<any>{
-        indicatorData.customerId = customerId;
-        if(!(indicatorData.indicatorId
-        && indicatorData.value
-        && moment(indicatorData.date).isValid())){
-            return new Promise(function(resolve, reject){
-                return reject('Faltan datos');
-            });
-        }
+    static updateIndicatorData(customerId:string, indicatorId:string, expect:IExpectation):Promise<any>{
+        expect.date = moment(expect.date).subtract(1,'day').endOf('month').toDate();
+        return IndicatorDataService.updateIndicatorData(customerId, indicatorId, expect.date, expect.value)
+            .then(function (result){
+                if(result.ok){
 
-        return IndicatorDataService.insertIndicatorData([indicatorData] as Array<MongoIndicatorData>);
-    }
-
-    static setQuarterExpectation(customerId:string, indicatorId:string, quarter:IExpectation){
-        let startOfQuarter:Date = moment(quarter.date).startOf('quarter').toDate();
-        let endOfQuarter:Date = moment(quarter.date).endOf('quarter').subtract(1, 'second').toDate();
-        let self = this;
-
-        return Promise.all([
-            IndicatorDataService.get(customerId, indicatorId),
-            IndicatorDataService.getIndicatorsData(customerId, [indicatorId], startOfQuarter, endOfQuarter)
-        ]).then(function onResponseAll(values:Array<any>){
-                // detalles del indicador solicitado
-                let indicator:MongoIndicator = values[0];
-                let indicatorsData:Array<MongoIndicatorData> = values[1];
-
-                // first we need to calculate the month value for the indicator
-                    // si la operacion es promediar =>  el valor es el mismo
-                if(indicator.datasource.columnOperation !== Operations.average){
-                    // cualquier otra operacion => el  valor se divide en la cantidad de meses
-                    quarter.value = quarter.value / 3;
-                }
-
-                // si ya hay datos importados cargados para este periodo
-                if(indicatorsData.length){
-                    
-                    // update indicator data with expectation
-                    let promiseArray:Array<Promise<any>> = [];
-                    for(var i=0; i < indicatorsData.length; i++){
-                        promiseArray.push(IndicatorDataService.updateIndicatorData(customerId, indicatorId, quarter.value ));                    
-                    }
-    
-                    return Promise.all(promiseArray)
-                        .then(function (values:Array<any>){
-                            let isOk:boolean = true;
-                            for(var j=0; j < values.length; j++){
-                                isOk = isOk && values[j].ok;
-                            }
-                            return { ok: isOk };
+                    IndicatorDataService.removeCachedPerformance(indicatorId);
+                    IndicatorDataService.get(customerId, indicatorId)
+                        .then(function (indicator:MongoIndicator){
+                            for(var i = 0; i < indicator.goalIds.length; i++){
+                                GoalService.removeCachedPerformance(indicator.goalIds[i]);
+                            }                
                         });
                 }
+                return result;
+            });
 
-                // if there aren't import, create empty imports with expect value set
-                let newIndicatorsData:Array<MongoIndicatorData> = self.createEmptyIndicatorData(customerId, indicatorId, quarter.value, startOfQuarter, endOfQuarter);
-                return IndicatorDataService.insertIndicatorData(newIndicatorsData)
-                    .then(function onInsert(response){
-                        return {
-                            ok: !!response.insertedIds.length
-                        }
-                    });
-            });        
     }
 
-    private static createEmptyIndicatorData(customerId:string, indicatorId:string, expected:number, start:Date, end:Date):Array<MongoIndicatorData>{
-        let howManyMonths = moment.duration(moment(end).diff(moment(start))).asMonths();
-        let result:Array<MongoIndicatorData> = [];
+    // private static createEmptyIndicatorData(customerId:string, indicatorId:string, expected:number, start:Date, end:Date):Array<MongoIndicatorData>{
+    //     let howManyMonths = moment.duration(moment(end).diff(moment(start))).asMonths();
+    //     let result:Array<MongoIndicatorData> = [];
 
-        for(var i=0; i<howManyMonths; i++){
-            result.push(new MongoIndicatorData(indicatorId, customerId, moment(start).add(i, 'month').endOf('month').toDate(), null, expected));
-        }
+    //     for(var i=0; i<howManyMonths; i++){
+    //         result.push({
+    //             indicatorId:indicatorId,
+    //             customerId: customerId,
+    //             date: moment(start).add(i, 'month').endOf('month').toDate(),
+    //             value: null,
+    //             expected: expected
+    //         });
+    //     }
 
-        return result;
-    }
+    //     return result;
+    // }
+
     /**
      * 
      * 
@@ -230,12 +379,89 @@ export class IndicatorService{
      * @param {any} indicatorExpected
      * @returns
      */
-    private static calculateIndicatorPerformance(indicator:MongoIndicator, indicatorData:Array<MongoIndicatorData>):IPerformance{
-        let result:IPerformance;
+    private static calculateIndicatorPerformance(indicator:MongoIndicator, months:Array<MongoIndicatorData>, from:Date, to:Date):IndicatorPerformanceBase{
+        let consolidateData:number = 0;
+        let consolidateExpected:number = 0;
+        
+        let oneUnitPercentageValue:number = 0;
+        let result:IndicatorPerformanceBase = {
+            indicatorId: indicator._id,
+            from: from,
+            to:  to,
+            unitValue: 0,
+            progressPerformance: [],
+            // if there is no data the default is "red" and "0%" 
+            periodPerformance: {
+                semaphoreStatus: SemaphoreStatus.red,
+                value: 0,
+                date: to
+            }
+        };
+        
+        if(!months.length){
+            return result;
+        }
 
-        if(indicator.performanceComparison === PerformanceComparisons.lessThan 
-        && (indicator.datasource.columnOperation === Operations.plus || indicator.datasource.columnOperation === Operations.average) ){
-            result = this.calculateLessThanPerformance(indicator, indicatorData);
+        consolidateExpected = _.sumBy(months, 'expected') || 1;
+
+        if(indicator.datasource.columnOperation === Operations.average){
+            consolidateExpected = consolidateExpected / months.length;
+        }
+
+        // get the performance progress
+        for(var i = 0; i < months.length; i++){
+            
+            let value:number;
+            consolidateData += months[i].value;
+
+            if(indicator.datasource.columnOperation === Operations.average){
+                value = consolidateData / (i+1);
+            } else {
+                value = consolidateData;
+            }
+
+            result.progressPerformance.push(this.getAccumulatedMonthPerformance(indicator, from, months[i].date, value, consolidateExpected));
+        }
+
+        if(indicator.datasource.columnOperation === Operations.average){
+            result.unitValue = consolidateData/ months.length;
+        } else {
+            result.unitValue = consolidateData;
+        }
+
+        result.periodPerformance = result.progressPerformance[result.progressPerformance.length -1];
+
+        return result;
+    }
+
+    private static getAccumulatedMonthPerformance(indicator:IndicatorApiResult, from:Date, to:Date, value:number, expected:number):IPerformance{
+        let result:IPerformance = {
+                semaphoreStatus: SemaphoreStatus.red,
+                value:0,
+                date: to
+        };
+
+        if(indicator.performanceComparison === PerformanceComparisons.lessThan){            
+            result.value = this.calculateLessThanPercentage(indicator, value, expected);
+        } else {
+            result.value = this.calculateEqualsToPercentage(indicator, value, expected);
+        }
+
+        if(result.value < 0){
+            result.value = 0;
+        }
+
+        if(result.value > indicator.semaphore.redUntil){
+            // yellow or green
+            if(result.value > indicator.semaphore.yellowUntil){
+                result.semaphoreStatus = SemaphoreStatus.green;                
+            }
+            else{
+                result.semaphoreStatus = SemaphoreStatus.yellow;
+            }
+        }
+        else{
+            result.semaphoreStatus = SemaphoreStatus.red;
         }
 
         return result;  
@@ -265,50 +491,27 @@ export class IndicatorService{
      * @param {Array} months
      * @returns
      */
-    private static calculateLessThanPerformance(indicator:MongoIndicator, months: Array<MongoIndicatorData>):IPerformance{
-        let consolidateData:number = 0;
-        let consolidateExpected:number = 0;
-        let onePercentValue: number = 0;
-        let performanceResult:IPerformance = {
-            semaphoreStatus: SemaphoreStatus.green,
-            value:0
-        };
+    private static calculateLessThanPercentage(indicator:MongoIndicator, value:number, expected:number):number{
+        // case study: monthly expected is less than 10 seconds per support call
+        // case study: the semaphore will be yellow until 60%
+
+        // if (expected value) is (100% - yellowUntilPercentage)
+        // 10 seconds = 40% (because up to 10 seconds the value is according to the expected)
         
-        if(!months.length){
-            performanceResult.semaphoreStatus = SemaphoreStatus.red;
-            performanceResult.value = 0;
-            return performanceResult;
-        }
-
-        // get the consolidates
-        for(var i = 0; i < months.length; i++){
-            consolidateData += months[i].value;
-            consolidateExpected += months[i].expected;   
-        }
-
-        if(indicator.datasource.columnOperation === Operations.average){
-            consolidateData = consolidateData / months.length;
-            consolidateExpected = consolidateExpected / months.length;
-        }
-
-        onePercentValue = consolidateExpected / (100 - indicator.semaphore.yellowUntil*100);
-
-        performanceResult.value = 1 - (consolidateData / onePercentValue)/100;
-
-        if(performanceResult.value < 0){
-            performanceResult.value = 0;
-        }
-
-        if(consolidateData >= consolidateExpected){
-            // red or yellow
-            if(performanceResult.value > indicator.semaphore.redUntil){
-                performanceResult.semaphoreStatus = SemaphoreStatus.yellow;                
-            }
-            else{
-                performanceResult.semaphoreStatus = SemaphoreStatus.red;
-            }
-        }
-
-        return performanceResult;
+        // that means that => (100% - yellowUntilPercentage) / expected value  => % for a unit
+        // (100% - 60%) / 10s => 1s %
+        // 40% / 10 s => 1s %
+        // 4%/s => 1 second of call is equal to a 4% decrease of the performance value
+        // a call of 4 seconds subtract 16% of performance
+        // a call of 10 seconds is 60%
+        // one of 11 56%   
+        
+        let oneUnitPercentage =  (1 - indicator.semaphore.yellowUntil)/expected;
+        return 1 - oneUnitPercentage * value;
     }
+
+    private static calculateEqualsToPercentage(indicator:MongoIndicator, value:number, expected:number):number{
+        let oneUnitPercentage: number = 1 / expected;
+        return oneUnitPercentage * value;
+    }    
 }

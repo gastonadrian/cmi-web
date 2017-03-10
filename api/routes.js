@@ -31,6 +31,13 @@ var routes={
                     fail: '/login'
                 }
             },
+            goaldetailedperformance:{
+                GET:true,
+                suffix:'/:goalId/:from?/:to?',
+                secure:{
+                    fail:'/login'
+                }
+            },
             goalupdate: {
                 POST:true,
                 secure:{
@@ -75,9 +82,15 @@ var routes={
                     fail: '/login'
                 }                                
             },
-            indicatorexpectation:{
-                POST:true,
-                suffix: '/:indicatorId',
+            // indicatorexpectation:{
+            //     POST:true,
+            //     suffix: '/:indicatorId',
+            //     secure:{
+            //         fail: '/login'
+            //     }
+            // },
+            indicatorsgetsync:{
+                GET:true,
                 secure:{
                     fail: '/login'
                 }
@@ -95,13 +108,28 @@ var routes={
                     fail: '/login'
                 }                 
             },
+            indicatorsdatagetall:{
+                GET:true,
+                suffix:'/:indicatorId',
+                secure: {
+                    fail: '/login'
+                }                
+            },
+            updateindicatordata:{
+                POST:true,
+                suffix:'/:indicatorId',
+                secure: {
+                    fail: '/login'
+                }                 
+            },
             indicatorsdatasource: { 
                 POST: true,
                 secure: {
                     fail: '/login'
                 }                
             },
-            customers:{ 
+            customers:{
+                GET:true,
                 POST:true,
                 secure: {
                     fail: '/login'

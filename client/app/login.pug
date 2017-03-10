@@ -9,9 +9,9 @@
   <!-- Bootstrap 3.3.6 -->
   <link rel="stylesheet" href="bootstrap/dist/css/bootstrap.min.css">
   <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
-  <!-- Ionicons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+    <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="Ionicons/css/ionicons.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="styles/index.css">
 </head>
@@ -25,6 +25,8 @@
     <p class="login-box-msg">Iniciar sesion</p>
 
     <form id="login">
+      div.form-group.has-error.hidden
+        span.help-block Credenciales inv&aacute;lidas. Intente nuevamente
       <div class="form-group has-feedback">
         <input type="email" class="form-control" name="email" placeholder="Email">
         <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
@@ -34,11 +36,11 @@
         <span class="glyphicon glyphicon-lock form-control-feedback"></span>
       </div>
       <div class="row">
-        <div class="col-xs-6">
-          <a href="#">Olvide mi password</a><br>
-        </div>
+        //- <div class="col-xs-6">
+        //-   <a href="#">Olvide mi password</a><br>
+        //- </div>
         <!-- /.col -->
-        <div class="col-xs-6">
+        <div class="pull-right col-xs-6">
           <button type="submit" class="btn btn-primary btn-block btn-flat">Iniciar Sesion</button>
         </div>
         <!-- /.col -->

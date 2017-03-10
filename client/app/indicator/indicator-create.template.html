@@ -28,7 +28,13 @@
                         <p class="help-block" [hidden]="columnOperation.valid || columnOperation.pristine">Este campo es requerido.</p>
                     </div>
                     <h3>An&aacute;lisis de datos</h3>
-                    <p>Para determinar la evoluci&oacute;n y performance de su indicador le solicitaremos en (en la seccion importaci&oacute;n de datos) que nos provea el valor esperado de cada indicador en manera mensual, por ejemplo: "El tiempo de espera debe ser <u>menor</u> a <u>10</u> minutos". </p>
+                    <p>Para determinar la evoluci&oacute;n y performance de su indicador le solicitamos ingrese el valor esperado de cada indicador en manera mensual, por ejemplo: "El tiempo de espera debe ser <u>menor</u> a <u>10</u> minutos". </p>
+                    <div class="form-group" [ngClass]="{ 'has-error': !expected.valid && !expected.pristine }">
+                        <label for="expected" class="control-label">Valor esperado mensual</label>
+                        <input type="number" [(ngModel)]="indicator.datasource.monthlyExpected" class="form-control" name="expected" required #expected="ngModel">
+                        <p class="help-block" [hidden]="expected.valid || expected.pristine">Este campo es requerido.</p>
+                    </div>                    
+                                        
                     <span class="help-block">Por favor indiquenos el modo de comparaci&oacute;n con el valor esperado</span>
                     <div class="radio">
                         <label>
@@ -45,12 +51,12 @@
                     <h3>Sem&aacute;foro</h3>
                     <h4>Necesitamos nos indique como configurar el semaforo para el indicador (por defecto utilizamos los valores que configuro en sem&aacute;foro global)</h4>
                     <div class="form-group" [ngClass]="{ 'has-error': !redUntil.valid && !redUntil.pristine }">
-                        <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en rojo desde 0% hasta </label>
+                        <label for="" class="col-xs-12 control-label">El sem&aacute;foro estara en rojo desde 0% hasta </label>
                         <input type="number" [(ngModel)]="indicator.semaphore.redUntil" class="form-control" name="redUntil" required #redUntil="ngModel">
                         <p class="help-block" [hidden]="redUntil.valid || redUntil.pristine">Este campo es requerido.</p>
                     </div>
                     <div class="form-group" [ngClass]="{ 'has-error': !yellowUntil.valid && !yellowUntil.pristine }">
-                        <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en amarillo desde {{redUntil.value}}% hasta</label>
+                        <label for="" class="col-xs-12 control-label">El sem&aacute;foro estara en amarillo desde {{redUntil.value}}% hasta</label>
                         <input type="number" [(ngModel)]="indicator.semaphore.yellowUntil" class="form-control" name="yellowUntil" required #yellowUntil="ngModel">
                         <p class="help-block" [hidden]="yellowUntil.valid || yellowUntil.pristine">Este campo es requerido.</p>
                     </div>
@@ -58,7 +64,7 @@
                     <h3>Importaci&oacute;n de datos</h3>
                     <strong>Por favor, no olvide habilitar los popups para este sitio!!</strong>
                     <button type="button" class="btn btn-info center-block"  [disabled]="!indicatorForm.form.valid" (click)="redirectToCollector()">Configurar importaci&oacute;n de datos</button>
-                    <span class="help-block">Este bot&oacute;n iniciar&aacute; nuestra aplicaci&oacute;n de recolecci&oacute;n de datos en su computadora. Si no posee la aplicaci&oacute;n, puede bajarla realizando click <a href="">aqu&iacute;</a></span>
+                    <span class="help-block">Este bot&oacute;n iniciar&aacute; nuestra aplicaci&oacute;n de recolecci&oacute;n de datos en su computadora. Si no posee la aplicaci&oacute;n, puede bajarla realizando click en: <a href="/installers/CMI Data Collector-1.0.0.dmg">Mac OS</a> | <a href="/installers/CMI Data Collector-1.0.0.zip">Windows</a></span>
                 </div>
                 <div class="box-footer">
                     <button type="button" class="btn btn-default">Cancelar</button>

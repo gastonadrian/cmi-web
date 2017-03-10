@@ -2,65 +2,89 @@ import * as mongoControl from 'mongo-control';
 import * as utils from './../utils';
 
 import { MongoPerspective } from './../models/mongo/perspective.mongo';
+import { ObjectID } from 'mongodb';
+import { PerspectiveApiResult } from "../models/api/perspective";
 
 export class PerspectiveDataService{
 
-    static getPerspectives(customerId:string):Promise<Array<MongoPerspective>>{
-
+    static getPerspectives(customerId:string):Promise<Array<PerspectiveApiResult>>{
+        console.time('3.1:getPerspectives');
         let findParams:any = {
             db: utils.getConnString(),
             collection: 'perspectives',
-            query: {
-                customerId:customerId
-            }
+            pipeline: [
+                {
+                    $match:{
+                        customerId: new ObjectID(customerId)
+                    }
+                },
+                {
+                    $lookup:{
+                        from: "goals",
+                        localField: "_id",
+                        foreignField: "perspectiveId",
+                        as: "goals"
+                    }
+                } 
+            ]
         };
         
-        return mongoControl.find(findParams);
+        return mongoControl.aggregate(findParams)
+            .then(function onOk(response){
+                console.timeEnd('3.1:getPerspectives');
+                return response;
+            });
     }
 
     static createBasePerspectives(customerId:string):Promise<any>{
-
-        let clientes:MongoPerspective =  {
-            "customerId" : customerId,
-            "title" : "Perspectiva Clientes",
+        var financiera:MongoPerspective = {
+            "customerId" : new ObjectID(customerId),
+            "title" : "Perspectiva Financiera",
             "semaphore" : {
-                "redUntil" : 30,
-                "yellowUntil" : 59
+                "redUntil" : 0.3,
+                "yellowUntil" : 0.59
             }
         } as MongoPerspective;
-        var aprendizaje:MongoPerspective = {
-            "customerId" : customerId,
-            "title" : "Perspectiva de Aprendizaje",
+        let clientes:MongoPerspective =  {
+            "customerId" : new ObjectID(customerId),
+            "title" : "Perspectiva Clientes",
             "semaphore" : {
-                "redUntil" : 30,
-                "yellowUntil" : 59
+                "redUntil" : 0.3,
+                "yellowUntil" : 0.59
             }
         } as MongoPerspective;
         var procesos:MongoPerspective = {
-            "customerId" : customerId,
+            "customerId" : new ObjectID(customerId),
             "title" : "Perspectiva de Procesos",
             "semaphore" : {
-                "redUntil" : 30,
-                "yellowUntil" : 59
+                "redUntil" : 0.3,
+                "yellowUntil" : 0.59
             }
         } as MongoPerspective;
-        var financiera:MongoPerspective = {
-            "customerId" : customerId,
-            "title" : "Perspectiva Financiera",
+        var aprendizaje:MongoPerspective = {
+            "customerId" : new ObjectID(customerId),
+            "title" : "Perspectiva de Aprendizaje",
             "semaphore" : {
-                "redUntil" : 30,
-                "yellowUntil" : 59
+                "redUntil" : 0.3,
+                "yellowUntil" : 0.59
             }
         } as MongoPerspective;
-        return this.insertPerspectives([clientes,aprendizaje,procesos,financiera]);
+
+        return this.insertPerspectives([financiera,clientes,procesos,aprendizaje]);
     }
 
     static insertPerspectives(perspectives:Array<MongoPerspective>):Promise<any>{
         let params:any = {
             db: utils.getConnString(),
-            collection: 'perspectives',
-            data: perspectives
+            collection: 'perspectives'
         };
+    
+        for(var i =0; i < perspectives.length; i++){
+            perspectives[i].customerId = new ObjectID(perspectives[i].customerId.toString());
+        }
+
+        params.data = perspectives;
+
         return mongoControl.insert(params);
     }
 
@@ -72,6 +96,9 @@ export class PerspectiveDataService{
         };
 
         delete perspective._id;
+        perspective.customerId = new ObjectID(perspective.customerId.toString());
+        perspective.goals = [];
+        
         params.update = perspective;
 
         return mongoControl.updateById(params);

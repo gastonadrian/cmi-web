@@ -3,7 +3,7 @@ module.exports = function customerApi(){
     let _ = require('lodash');
 
     this.add('role:customers,cmd:save', save);
-    // this.add('role:customers,cmd:get', get)
+    this.add('role:customers,cmd:getall', getAll);
 
     function save(msg, respond){
         var pin = {
@@ -21,8 +21,13 @@ module.exports = function customerApi(){
                 respond(null, response);
             }
         });
+    }
 
-
+    function getAll(msg, respond){
+        customerService.getAll(msg.args.params.customerId)
+        .then(function onGet(result){
+            respond(null, result);
+        });
     }
 
     // function getAll(msg, respond){

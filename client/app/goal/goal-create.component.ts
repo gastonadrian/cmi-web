@@ -32,7 +32,6 @@ export class GoalCreateComponent implements OnInit, AfterViewInit{
   
   public indicators: Array<IndicatorApiResult>;
   public indicator:IndicatorApiResult = new IndicatorApiResult();
-  public quarterExpected:number = 1;
   public factor:number = 1;
 
   public errorMessage:string;
@@ -50,20 +49,34 @@ export class GoalCreateComponent implements OnInit, AfterViewInit{
   }
   
   ngAfterViewInit() {
-      
-      this.htmlElement = this.element.nativeElement;
-      this.goalIndicatorsTableElement = this.goalIndicatorsTable.nativeElement;
-      this.indicatorsTableElement = this.indicatorsTable.nativeElement;
-      this.goalIndicatorsDataTable = $(this.goalIndicatorsTableElement).DataTable(AppSettings.DataTableConfig);    
-      this.indicatorsDataTable =$(this.indicatorsTableElement).DataTable(AppSettings.DataTableConfig);    
+      if(this.goal && this.goal._id){
+        this.htmlElement = this.element.nativeElement;
+        this.goalIndicatorsTableElement = this.goalIndicatorsTable.nativeElement;
+        this.indicatorsTableElement = this.indicatorsTable.nativeElement;
+        this.goalIndicatorsDataTable = $(this.goalIndicatorsTableElement).DataTable(AppSettings.DataTableConfig);    
+        this.indicatorsDataTable =$(this.indicatorsTableElement).DataTable(AppSettings.DataTableConfig);    
+      }
   }
 
   ngOnInit(){
     this.route.data
       .subscribe((data:any) => {
+        console.log(data.perspectiveId);
+        if(!data.goal){
+          data.goal = new GoalApiResult();
+        }
         this.goal = data.goal;  
+
+        if(this.goal.semaphore){
+          this.goal.semaphore = {
+            redUntil: this.goal.semaphore.redUntil *100,
+            yellowUntil: this.goal.semaphore.yellowUntil * 100
+          };
+        }
         this.perspectives = data.perspectives;
-        this.removeGoalIndicatorsFromSystemIndicators(data.indicators);
+        if(this.goal._id){
+          this.removeGoalIndicatorsFromSystemIndicators(data.indicators);          
+        }
      });
   }
 
@@ -81,17 +94,34 @@ export class GoalCreateComponent implements OnInit, AfterViewInit{
   }
 
   onSubmit(){
-    this.goalService.update(this.goal)
-        .subscribe(
-        (ok:any) => { 
-          if(ok){
-            this.router.navigateByUrl('/dashboard');
+  
+    if(this.goal._id){
+      this.goalService.update(this.goal)
+          .subscribe(
+          (ok:any) => { 
+            if(ok){
+              this.router.navigateByUrl('/dashboard');
+            }
+          },
+          (error:any) => {
+              this.errorMessage = error;
           }
+        );
+    } else {
+      this.goalService.save(this.goal)
+      .subscribe(
+        (goalId:any) => { 
         },
         (error:any) => {
-            this.errorMessage = error;
+            console.log('error', error);
+        },
+        () => {
+            this.router.navigateByUrl('/perspectives');
         }
       );
+    }
+
+
   }
 
   refreshTables(){
@@ -141,55 +171,36 @@ export class GoalCreateComponent implements OnInit, AfterViewInit{
         .subscribe(
           (ok:any) => { 
             if(ok){
-
-              // set quarter expected
-              this.indicatorService.setQuarterExpectation(this.indicator._id, {
-                value: this.quarterExpected,
-                date: new Date()
-              }).subscribe( 
-                (quarterResult:any) => {
-                  if(quarterResult){
-                    this.factor = 1;
-                    this.quarterExpected = 1;
-
-                    // redraw tables
-                    if(this.indicator.goalIds.find((goalId:string, index:number, obj:any) => {  
-                      return goalId === this.goal._id;
-                    })){
-                      // el indicador ya estaba en la lista de indicadores del objetivo, no hacer nada
-                    }
-                    else{
-                      // redibujar las tablas
-                      let tmpIndicator = new IndicatorApiResult();
-                      tmpIndicator.title = this.indicator.title;
-                      tmpIndicator._id = this.indicator._id;
-                      tmpIndicator.data = {
-                        title: this.indicator.data.title,
-                        type: this.indicator.data.type
-                      }
-                      tmpIndicator.columnOperationTitle = this.indicator.columnOperationTitle;
-                      tmpIndicator.goalIds = [this.goal._id];
-
-                      this.goal.indicators.push(tmpIndicator);
-
-                      // removing the indicator from the list of unassigned indicators
-                      for(var j=0; j < this.indicators.length; j++){
-                        if(this.indicators[j]._id === this.indicator._id){
-                          this.indicators.splice(j, 1);
-                          break;
-                        }
-                      }
-                    }
-                    this.indicator = new IndicatorApiResult();
-                  }
-                },
-                (error:any) => {
-                  this.errorMessage = error;
-                },
-                () => {
-                  this.refreshTables();
+              this.factor = 1;
+              // redraw tables
+              if(this.indicator.goalIds.find((goalId:string, index:number, obj:any) => {  
+                return goalId === this.goal._id;
+              })){
+                // el indicador ya estaba en la lista de indicadores del objetivo, no hacer nada
+              }
+              else{
+                // redibujar las tablas
+                let tmpIndicator = new IndicatorApiResult();
+                tmpIndicator.title = this.indicator.title;
+                tmpIndicator._id = this.indicator._id;
+                tmpIndicator.data = {
+                  title: this.indicator.data.title,
+                  type: this.indicator.data.type
                 }
-              );
+                tmpIndicator.columnOperationTitle = this.indicator.columnOperationTitle;
+                tmpIndicator.goalIds = [this.goal._id];
+  
+                this.goal.indicators.push(tmpIndicator);
+  
+                // removing the indicator from the list of unassigned indicators
+                for(var j=0; j < this.indicators.length; j++){
+                  if(this.indicators[j]._id === this.indicator._id){
+                    this.indicators.splice(j, 1);
+                    break;
+                  }
+                }
+              }
+              this.indicator = new IndicatorApiResult();
 
             }
           },

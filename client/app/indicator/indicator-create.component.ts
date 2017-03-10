@@ -39,7 +39,8 @@ export class IndicatorCreateComponent implements OnInit, AfterViewInit{
       table:'',
       rowOperation:'',
       dateColumn:'',
-      valueColumn:''
+      valueColumn:'',
+      monthlyExpected: 1
    };
   public submitted: Boolean = false;
 
@@ -80,6 +81,14 @@ export class IndicatorCreateComponent implements OnInit, AfterViewInit{
           this.indicator.datasource = this.emptyDataSource;
       
         }
+
+        if(this.indicator.semaphore){
+          this.indicator.semaphore = {
+            redUntil: this.indicator.semaphore.redUntil *100,
+            yellowUntil: this.indicator.semaphore.yellowUntil * 100
+          };
+        }
+
      });  
   }
   
@@ -100,7 +109,7 @@ export class IndicatorCreateComponent implements OnInit, AfterViewInit{
             console.log('error', error);
         },
         () =>{
-            this.router.navigateByUrl('/dashboard');
+            this.router.navigateByUrl('/indicators/list');
         }
       );
   }

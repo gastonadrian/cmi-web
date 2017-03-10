@@ -30,6 +30,11 @@ let seneca:SENECA.Instance = SENECA();
 // let utils = utilsModule();
 let app:any = express();
 let senecaWebConfig:any = {
+    transport:{
+    tcp:{
+        timeout:20000
+    }
+    },
     context: context,
     adapter: require('seneca-web-adapter-express'),
     auth: passport,
@@ -40,8 +45,6 @@ let senecaWebConfig:any = {
 // specify the views directory
 app.set('view engine', 'pug');
 app.set('views', './client/app');
-
-console.log( path.join(__dirname + '/../client/dist'));
 
 app.use(express.static( path.join(__dirname + '/../client/dist')));
 app.use(express.static(path.join(__dirname + '/../client/bower_components')));
@@ -58,7 +61,8 @@ seneca
         port: process.env.MONGO_PORT,
         username: process.env.MONGO_USER,
         password: process.env.MONGO_PASSWORD,
-        options: {}
+        options: {
+        }
      } )
     .use( senecaBasic )
     .use( senecaEntity, {
@@ -159,11 +163,6 @@ app.get('/logout',
         res.redirect('/');
     }
 );
-
-app.get('/_ah/health', function (req, res){
-    res.send({ ok: true });
-});
-
 
 // 404 catch 
 app.all('*', 

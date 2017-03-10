@@ -19,3 +19,7 @@ export * from './api/perspective';
 export * from './mongo/indicator-data';
 export * from './api/expectation';
 export * from './mongo/datasource';
+export * from './indicator-sync.interface';
+export * from './indicator-data.base';
+export * from './goal-performance.base';
+export * from './indicator-performance.base';

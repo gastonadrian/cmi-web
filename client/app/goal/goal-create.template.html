@@ -19,17 +19,17 @@
                     <h3>Sem&aacute;foro</h3> 
                     <h4>Necesitamos nos indique como configurar el sem&aacute;foro para el indicador (por defecto utilizamos los valores que configuro en sem&aacute;foro global)</h4>
                     <div class="form-group" [ngClass]="{ 'has-error': !redUntil.valid && !redUntil.pristine }">
-                        <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en rojo desde 0% hasta </label>
+                        <label for="" class="col-xs-12 control-label">El sem&aacute;foro estara en rojo desde 0% hasta </label>
                         <input type="number" [(ngModel)]="goal.semaphore.redUntil" class="form-control" name="redUntil" required #redUntil="ngModel">
                         <p class="help-block" [hidden]="redUntil.valid || redUntil.pristine">Este campo es requerido.</p>
                     </div>
                     <div class="form-group" [ngClass]="{ 'has-error': !yellowUntil.valid && !yellowUntil.pristine }">
-                        <label for="" class="col-xs-12 col-sm-4 control-label">El sem&aacute;foro estara en amarillo desde {{redUntil.value}}% hasta</label>
+                        <label for="" class="col-xs-12 control-label">El sem&aacute;foro estara en amarillo desde {{redUntil.value}}% hasta</label>
                         <input type="number" [(ngModel)]="goal.semaphore.yellowUntil" class="form-control" name="yellowUntil" required #yellowUntil="ngModel">
                         <p class="help-block" [hidden]="yellowUntil.valid || yellowUntil.pristine">Este campo es requerido.</p>
                     </div>
-                    <h3>Indicadores del objetivo</h3>
-                    <table #goalIndicatorsTable class="table table-bordered table-hover">
+                    <h3 *ngIf="goal._id">Indicadores del objetivo</h3>
+                    <table #goalIndicatorsTable  *ngIf="goal._id" class="table table-bordered table-hover">
                         <thead>
                             <tr>
                                 <th>Nombre</th>
@@ -50,9 +50,9 @@
                                 </td>
                             </tr>                            
                         </tbody>
-                    </table>                    
-                    <h3>Indicadores en el sistema</h3>
-                    <table #indicatorsTable class="table table-bordered table-hover">
+                    </table>
+                    <h3 *ngIf="goal._id">Indicadores en el sistema</h3>
+                    <table #indicatorsTable *ngIf="goal._id" class="table table-bordered table-hover">
                         <thead>
                             <tr>
                                 <th>Nombre</th>
@@ -75,13 +75,6 @@
 
                     <h3 *ngIf="!!indicator._id">Configurar Indicador: <strong>{{indicator.title}}</strong></h3>
                     <div *ngIf="!!indicator._id" class="form form-horizontal">
-                        <div class="form-group">                          
-                            <label for="" class="col-xs-12 col-sm-4 control-label">Valor esperado para el trimestre actual</label>
-                            <div class="col-sm-6 col-xs-10 input-group">
-                                <input type="number" class="form-control" [(ngModel)]="quarterExpected" [ngModelOptions]="{standalone: true}" required >
-                                <span class="input-group-addon">{{indicator.data.title}}</span>
-                            </div>
-                        </div>
                         <div class="form-group">
                             <label for="" class="control-label col-xs-12 col-sm-4">Ponderaci&oacute;n dentro del objetivo</label>
                             <div class="col-xs-10 col-sm-6">

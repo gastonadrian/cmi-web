@@ -44,6 +44,7 @@ export class PerspectiveComponent implements OnInit, AfterViewInit{
       .subscribe(
         (goalId:any) => { 
           goal._id = goalId;
+          this.newGoals[perspectiveIndex] = '';
           this.perspectives[perspectiveIndex].goals.unshift(goal);
         },
         (error:any) => {
@@ -76,6 +77,13 @@ export class PerspectiveComponent implements OnInit, AfterViewInit{
           let tmpGoal:GoalApiResult = new GoalApiResult();
           tmpGoal.perspectiveId = data[i]._id;
           data[i].goals.push(tmpGoal);
+
+          if(data[i].semaphore){
+            data[i].semaphore = {
+              redUntil: data[i].semaphore.redUntil *100,
+              yellowUntil: data[i].semaphore.yellowUntil * 100
+            };
+          }
         }
         this.perspectives = data;
      });

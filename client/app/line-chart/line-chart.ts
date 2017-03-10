@@ -1,5 +1,6 @@
 import { Component, Input, ElementRef, AfterViewInit, ViewChild,  OnChanges } from '@angular/core';
 import { LineChartConfig } from '../shared/models/line-chart-config';
+import { Observable } from "rxjs/Observable";
 
 declare let d3:any;
 declare let moment:any;
@@ -12,9 +13,10 @@ declare let nv:any;
 })
 export class LineChartComponent implements OnChanges, AfterViewInit {
 
-    @Input() config: LineChartConfig;
+    @Input() observableConfig: Observable<LineChartConfig>;    
     @ViewChild('container') element: ElementRef;
 
+    private config:LineChartConfig;
     private host:any;
     private chart:any;
     private htmlElement: HTMLElement;
@@ -38,15 +40,23 @@ export class LineChartComponent implements OnChanges, AfterViewInit {
      * Everythime the @Input is updated, we rebuild the chart
     **/
     ngOnChanges(changes: any): void {
-        if (!this.config || !this.host){
-            return;
-        }
-        this.config.settings = {
-            xAxisFormat: this.config.settings.xAxisFormat || 'MMM',
-            xAxisLabel: this.config.settings.xAxisLabel || 'x',
-            yAxisLabel: this.config.settings.yAxisLabel || 'y'
-        };
-        nv.addGraph(this.buildSVG.bind(this));                        
+        this.observableConfig.subscribe(
+            (config:LineChartConfig) => {
+                this.config = config;
+                if (!this.config || !this.host){
+                    return;
+                }
+        
+                this.config.settings = {
+                    xAxisFormat: this.config.settings.xAxisFormat || 'MMM',
+                    xAxisLabel: this.config.settings.xAxisLabel || 'x',
+                    yAxisLabel: this.config.settings.yAxisLabel || 'y'
+                };
+                nv.addGraph(this.buildSVG.bind(this));        
+            }
+        );  
+    
+
     }
 
     /**

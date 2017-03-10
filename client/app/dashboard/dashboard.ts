@@ -8,6 +8,7 @@ import { DataPeriod } from './../shared/models/shared';
 import { DataPeriodService } from './../shared/services/data-period-service';
 import { Subscription }   from 'rxjs/Subscription';
 import { DashboardService } from './../shared/services/dashboard-service';
+import { PerspectiveApiResult } from "../../../api/models/api/perspective";
 
 @Component({
   moduleId: module.id,
@@ -15,7 +16,7 @@ import { DashboardService } from './../shared/services/dashboard-service';
   templateUrl: 'dashboard.template.html'
 })
 export class DashboardComponent implements OnInit {
-    public perspectives:Array<Perspective>;
+    public perspectives:Array<PerspectiveApiResult>;
     public selectedPeriod: DataPeriod;
     private subscription: Subscription;
 
@@ -32,7 +33,7 @@ export class DashboardComponent implements OnInit {
     this.subscription = this.dataPeriodService.dataPeriodChanged$.subscribe(
       (period:DataPeriod) => {
         this.selectedPeriod = period;
-        this.dashboardService.get(period.start, period.end).subscribe( (data:Array<Perspective>) => {
+        this.dashboardService.get(period.start, period.end).subscribe( (data:Array<PerspectiveApiResult>) => {
             this.perspectives = data;
         });
     });

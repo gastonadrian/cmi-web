@@ -717,11 +717,28 @@ function _init() {
     }
     function login(e){
         e.preventDefault();
-        $.post('/api/login', loginForm.serialize(), function(response){
+        $.ajax({
+          url: '/api/login',
+          method:'POST',
+          data: loginForm.serialize(),
+          success: function(response){
             window.location.href = '/';
+          },
+          error: function error(xhr, err, err2){
+            $('.form-group.has-error.hidden').removeClass('hidden');
+          }
         });
+        return false;
     }
 })(jQuery);
+if(window['moment']){
+  moment.updateLocale('en', {
+      months : [
+          "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
+          "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+      ]
+  });
+}
 
 /*
  * TODO LIST CUSTOM PLUGIN
