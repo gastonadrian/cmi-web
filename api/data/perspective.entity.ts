@@ -97,7 +97,8 @@ export class PerspectiveDataService{
 
         delete perspective._id;
         perspective.customerId = new ObjectID(perspective.customerId.toString());
-
+        perspective.goals = [];
+        
         params.update = perspective;
 
         return mongoControl.updateById(params);

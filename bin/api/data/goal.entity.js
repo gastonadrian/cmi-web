@@ -90,8 +90,8 @@ var GoalDataService = (function () {
             db: utils.getConnString(),
             collection: 'goal-indicators',
             query: {
-                goalId: goalId,
-                customerId: customerId
+                goalId: goalId.toString(),
+                customerId: customerId.toString()
             }
         };
         return mongoControl.remove(goalIndicatorParams)
@@ -101,8 +101,8 @@ var GoalDataService = (function () {
                 db: utils.getConnString(),
                 collection: 'goals',
                 query: {
-                    _id: new mongodb_1.ObjectID(goalId),
-                    customerId: customerId
+                    _id: new mongodb_1.ObjectID(goalId.toString()),
+                    customerId: new mongodb_1.ObjectID(customerId.toString())
                 }
             };
             return mongoControl.remove(params)

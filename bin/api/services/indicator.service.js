@@ -259,8 +259,20 @@ var IndicatorService = (function () {
         return indicator_entity_1.IndicatorDataService.updateIndicator(indicator);
     };
     IndicatorService.updateIndicatorData = function (customerId, indicatorId, expect) {
-        expect.date = moment(expect.date).toDate();
-        return indicator_entity_1.IndicatorDataService.updateIndicatorData(customerId, indicatorId, expect.date, expect.value);
+        expect.date = moment(expect.date).subtract(1, 'day').endOf('month').toDate();
+        return indicator_entity_1.IndicatorDataService.updateIndicatorData(customerId, indicatorId, expect.date, expect.value)
+            .then(function (result) {
+            if (result.ok) {
+                indicator_entity_1.IndicatorDataService.removeCachedPerformance(indicatorId);
+                indicator_entity_1.IndicatorDataService.get(customerId, indicatorId)
+                    .then(function (indicator) {
+                    for (var i = 0; i < indicator.goalIds.length; i++) {
+                        goal_service_1.GoalService.removeCachedPerformance(indicator.goalIds[i]);
+                    }
+                });
+            }
+            return result;
+        });
     };
     // private static createEmptyIndicatorData(customerId:string, indicatorId:string, expected:number, start:Date, end:Date):Array<MongoIndicatorData>{
     //     let howManyMonths = moment.duration(moment(end).diff(moment(start))).asMonths();

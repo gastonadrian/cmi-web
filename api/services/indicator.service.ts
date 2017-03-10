@@ -336,8 +336,22 @@ export class IndicatorService{
     }
 
     static updateIndicatorData(customerId:string, indicatorId:string, expect:IExpectation):Promise<any>{
-        expect.date = moment(expect.date).toDate();
-        return IndicatorDataService.updateIndicatorData(customerId, indicatorId, expect.date, expect.value);
+        expect.date = moment(expect.date).subtract(1,'day').endOf('month').toDate();
+        return IndicatorDataService.updateIndicatorData(customerId, indicatorId, expect.date, expect.value)
+            .then(function (result){
+                if(result.ok){
+
+                    IndicatorDataService.removeCachedPerformance(indicatorId);
+                    IndicatorDataService.get(customerId, indicatorId)
+                        .then(function (indicator:MongoIndicator){
+                            for(var i = 0; i < indicator.goalIds.length; i++){
+                                GoalService.removeCachedPerformance(indicator.goalIds[i]);
+                            }                
+                        });
+                }
+                return result;
+            });
+
     }
 
     // private static createEmptyIndicatorData(customerId:string, indicatorId:string, expected:number, start:Date, end:Date):Array<MongoIndicatorData>{

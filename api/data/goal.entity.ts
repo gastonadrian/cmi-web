@@ -114,8 +114,8 @@ export class GoalDataService{
             db: utils.getConnString(),
             collection: 'goal-indicators',
             query: {
-                goalId:goalId,
-                customerId: customerId
+                goalId:goalId.toString(),
+                customerId: customerId.toString()
             }
         };
 
@@ -126,8 +126,8 @@ export class GoalDataService{
                     db: utils.getConnString(),
                     collection: 'goals',
                     query: {
-                        _id: new ObjectID(goalId),
-                        customerId:customerId
+                        _id: new ObjectID(goalId.toString()),
+                        customerId: new ObjectID(customerId.toString())
                     }
                 };
         

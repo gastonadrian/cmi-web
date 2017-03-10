@@ -86,6 +86,7 @@ var PerspectiveDataService = (function () {
         };
         delete perspective._id;
         perspective.customerId = new mongodb_1.ObjectID(perspective.customerId.toString());
+        perspective.goals = [];
         params.update = perspective;
         return mongoControl.updateById(params);
     };
